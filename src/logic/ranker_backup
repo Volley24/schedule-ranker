@@ -1,0 +1,112 @@
+import { Class, PotentialClass, PotentialLab, RawClass, Schedule, WeekDay } from "./definitions";
+
+export const rank = (): number => {
+	let score = 0;
+
+	return score;
+};
+
+export const parseSchedules = (str: string): Class[] => {
+	const json = JSON.parse(str);
+	const classes: RawClass[] = json.classes;
+
+	const mapClasses = (strSplit: string[], offset: number = 0) => {
+		type Days = "mon" | "tue" | "wed" | "thur" | "fri";
+		const mapDay: Record<Days, WeekDay> = {
+			mon: WeekDay.MONDAY,
+			tue: WeekDay.TUESDAY,
+			wed: WeekDay.WEDNESDAY,
+			thur: WeekDay.THURSDAY,
+			fri: WeekDay.FRIDAY,
+		};
+
+		return {
+			section: strSplit[0 + offset],
+			prof: strSplit[1 + offset],
+			days: strSplit[2 + offset].split("/").map((strDay) => mapDay[strDay as Days]),
+			time: strSplit[3 + offset],
+		};
+	};
+
+	return classes.map((aClass) => ({
+		...aClass,
+		potentialClasses: aClass.potentialClasses.map<PotentialClass>((str) => {
+			return mapClasses(str.split(","));
+		}),
+		potentialLabs: aClass.potentialLabs.map<PotentialLab>((str) => {
+			const strSplit = str.split(",");
+			const potentialLab: PotentialLab = mapClasses(strSplit, 1);
+			potentialLab.classSections = strSplit[0].split("/");
+			return potentialLab;
+		}),
+	}));
+};
+
+export const generateSchedules = () => {
+	console.time("Schedule Generator");
+
+	const createSection = (name: string): PotentialClass => ({
+		section: name,
+		days: [],
+		prof: "",
+		time: "",
+	});
+	const createLab = (name: string, onlyForSections?: string[]): PotentialLab => ({
+		section: name,
+		days: [],
+		prof: "",
+		time: "",
+		classSections: onlyForSections,
+	});
+
+	const classes: Class[] = [
+		{
+			id: "SYSC 2006",
+			name: "C",
+			potentialClasses: [createSection("A"), createSection("B")],
+			potentialLabs: [createLab("L1", ["A", "B"]), createLab("L2", ["B"])],
+		},
+		{
+			id: "SYSC 2004",
+			name: "JAVA",
+			potentialClasses: [createSection("A"), createSection("B")],
+			potentialLabs: [createLab("L1", ["A"]), createLab("L2", ["B"])],
+		},
+		{
+			id: "SYSC 2008",
+			name: "THE BIG CAC",
+			potentialClasses: [createSection("A"), createSection("B"), createSection("C")],
+			potentialLabs: [createLab("L1"), createLab("L2"), createLab("L3", ["C"])],
+		},
+	];
+
+	const schedules: Schedule[] = [];
+
+	const recurse = (schedule: Schedule = [], index: number) => {
+		const myClass = classes[index];
+		myClass.potentialClasses.forEach((potentialClass) => {
+			const newSchedule: Schedule = [...schedule, { ...myClass, ...potentialClass }];
+
+			myClass.potentialLabs.forEach((potentialLab) => {
+				const classSections = potentialLab.classSections;
+				if (classSections && !classSections.includes(potentialClass.section)) {
+					return;
+				}
+				const newerSchedule: Schedule = [...newSchedule, { ...myClass, ...potentialLab }];
+				if (index + 1 < classes.length) {
+					recurse(newerSchedule, index + 1);
+				} else {
+					schedules.push(newerSchedule);
+				}
+			});
+		});
+	};
+	recurse([], 0);
+	// schedules.forEach((schedule) => {
+	// 	console.log("Schedule:");
+	// 	console.log(schedule.map((aClass) => `${aClass.id} SECTION ${aClass.section}`));
+	// });
+	console.log(`Length of schedules: ${schedules.length}`);
+
+	console.timeEnd("Schedule Generator");
+};

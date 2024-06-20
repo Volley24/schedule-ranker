@@ -1,0 +1,82 @@
+{
+	"classes": [
+		{
+			"id": "SYSC 2006",
+			"name": "Foundations of Imperative Programming",
+			"sections": ["A,Lynn Marshall,Tue/Thu,16:05 - 17:25", "B,Cristina Ruiz Martin,Tue/Thu,17:35 - 18:55"],
+			"labSections": [
+				"A/B,L1/L2,a,Fri,08:35 - 10:25",
+				"A/B,L3,a,Mon,11:35 - 13:25",
+				"A/B,L5,a,Wed,16:05 - 17:55",
+				"A/B,L6,a,Wed,16:05 - 17:55",
+				"A/B,L7,a,Mon,08:35 - 10:25",
+				"A/B,L9,a,Wed,09:35 - 11:25"
+			]
+		},
+		{
+			"id": "SYSC 2310",
+			"name": "Intro to Digital Systems",
+			"sections": ["A,Shaghayegh Gomar,Mon/Wed,08:35 - 09:55", "B,Shaghayegh Gomar,Mon/Wed,13:05 - 14:25"],
+			"labSections": [
+				"A/B,L1E/L1O,a,Mon,14:35 - 17:25",
+				"A/B,L2E/L2O,a,Fri,14:35 - 17:25",
+				"A/B,L3E/L3O,a,Fri,11:35 - 14:25"
+			]
+		},
+		{
+			"id": "MATH 1005",
+			"name": "Diff. Eqs. & Series Eng. & Phy",
+			"sections": [
+				"A,Ayse Alaca,Wed/Fri,10:05 - 11:25",
+				"B,Ayse Alaca,Mon/Wed,11:35 - 12:55",
+				"C,Unknown,Tue/Thu,08:35 - 09:55",
+				"D,Unknown,Tue/Thu,14:35 - 15:55",
+				"E,Unknown,Mon/Wed,18:05 - 19:25",
+				"F,Unknown,Tue/Thu,19:35 - 20:55"
+			],
+			"labSections": [
+				"A,AT,a,Wed,17:35 - 18:25",
+				"B,BT,a,Mon,14:35 - 15:25",
+				"C,CT,a,Thu,13:35 - 14:25",
+				"D,DT,a,Thu,17:35 - 18:25",
+				"E,ET,a,Wed,19:35 - 20:25",
+				"F,FT,a,Thu,21:05 - 21:55"
+			]
+		},
+		{
+			"id": "ELEC 2501",
+			"name": "Circuits and Signals",
+			"sections": [
+				"A,Connor Kupchak,Tue/Thu,11:35 - 12:55",
+				"B,Niall Tait,Wed/Fri,14:35 - 15:55",
+				"C,Hubert Jean-Ruel,Tue/Thu,13:05 - 14:25"
+			],
+			"labSections": [
+				"A/B/C,L1,a,Wed,11:35 - 14:25",
+				"A/B/C,L2,a,Wed,08:35 - 11:25",
+				"A/B/C,L3,a,Wed,14:35 - 17:25",
+				"A/B/C,L4,a,Mon,14:35 - 17:25",
+				"A/B/C,L5,a,Mon,08:35 - 11:25",
+				"A/B/C,L6,a,Fri,11:35 - 14:25",
+				"A/B/C,L7,a,Thu,08:35 - 11:25",
+				"A/B/C,L8,a,Tue,08:35 - 11:25"
+			]
+		},
+		{
+			"id": "CCDP 2100",
+			"name": "Communication Skills for B.Eng",
+			"sections": [
+				"A,Helen Triantafellou,Wed,08:35 - 11:25",
+				"B,Helen Triantafellou,Fri,08:35 - 11:25,ONLINE",
+				"C,Unknown,Wed,18:05 - 20:55,ONLINE",
+				"D,Unknown,Tue,18:05 - 20:55",
+				"E,Kimberley Davis,Thu,14:35 - 17:25",
+				"F,Unknown,Mon,14:35 - 17:25",
+				"G,Helen Triantafellou,Mon,08:35 - 11:25",
+				"H,Unknown,Thu,18:05 - 20:55",
+				"I,Unknown,Mon,18:05 - 20:55"
+			],
+			"labSections": []
+		}
+	]
+}
