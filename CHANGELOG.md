@@ -15,6 +15,18 @@ As the name of the version implies, this version will add the ability to for cus
 
 # Current
 
+## v.0.2-alpha-2 - 2024/6/xx
+
+**UI:**
+
+-   [x] Added more information about a file import.
+    -   [x] A message is shown if a JSON file is failed to import.
+-   [x] Schedules that are imported are now persistent!
+    -   [~] You can choose schedules you've already imported with the dropdown. (Assuming they were successful)
+-   [ ] You are now able to control the weights of each ranking!
+    -   [ ] Ranks are now reported to four decimal places maximum.
+-       [ ] Fixed a bug where the website would crash upon the schedule index being out of bounds.
+
 ## v.0.2-alpha-1 - 2024/6/19
 
 **UI:**

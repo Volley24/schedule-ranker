@@ -1,3 +1,4 @@
+import { WeightCategory } from "../App";
 import { TimeRange } from "./time";
 
 export enum WeekDay {
@@ -20,12 +21,9 @@ export type Schedule = ScheduledClass[];
 
 export type RankedSchedule = {
 	classes: ScheduledClass[];
-	totalScore: number;
 
-	dayOffScore: number;
-	earlyClassScore: number;
-	breakScore: number;
-	lateClassScore: number;
+	totalScore: number;
+	scores: Map<WeightCategory, number>;
 };
 
 export type ScheduledClass = CourseMetaData &
