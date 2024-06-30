@@ -14,12 +14,15 @@ const StyledTabs = styled(Tabs)`
 	background: #e4e4e4;
 `;
 
-const StyledTab = styled(Tab)`
-	width: 175px;
-`;
-
 const MainContainer = styled.div`
 	width: 350px;
+	position: relative;
+`;
+
+const VersionContainer = styled.div`
+	position: absolute;
+	bottom: 5px;
+	left: 7px;
 `;
 
 enum TabName {
@@ -34,8 +37,9 @@ export const TabBar = (props: {
 	setSchedule: (courses: Schedule[]) => void;
 	weights: Weights;
 	setWeights: (val: Weights) => void;
+	maxSchedules: number;
 }) => {
-	const { value, setValue, selectedSchedule, setSchedule, weights, setWeights } = props;
+	const { value, setValue, selectedSchedule, setSchedule, weights, setWeights, maxSchedules } = props;
 	const [selectedTab, setSelectedTab] = React.useState<TabName>(TabName.IMPORT);
 
 	const renderSelectedTab = () => {
@@ -49,6 +53,7 @@ export const TabBar = (props: {
 					selectedSchedule={selectedSchedule}
 					weights={weights}
 					setWeights={setWeights}
+					maxSchedules={maxSchedules}
 				/>
 			);
 		}
@@ -57,16 +62,18 @@ export const TabBar = (props: {
 
 	return (
 		<MainContainer>
-			<StyledPaper elevation={10}>
+			<StyledPaper>
 				<StyledTabs
 					value={selectedTab}
 					onChange={(_event, value: TabName) => setSelectedTab(value)}
 					aria-label="basic tabs example"
+					variant="fullWidth"
 				>
-					<StyledTab label={TabName.IMPORT} value={TabName.IMPORT} />
-					<StyledTab label={TabName.CONFIG} value={TabName.CONFIG} />
+					<Tab label={TabName.IMPORT} value={TabName.IMPORT} />
+					<Tab label={TabName.CONFIG} value={TabName.CONFIG} />
 				</StyledTabs>
 				{renderSelectedTab()}
+				<VersionContainer>Carleton Schedule Ranker - v.2.0</VersionContainer>
 			</StyledPaper>
 		</MainContainer>
 	);

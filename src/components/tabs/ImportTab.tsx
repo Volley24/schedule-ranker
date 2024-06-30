@@ -2,8 +2,20 @@ import React from "react";
 import styled from "styled-components";
 import { parseSchedules, generateSchedules, filterInvalidSchedules } from "../../logic/ranker";
 import { Schedule } from "../../logic/definitions";
-import { FormControl, InputLabel, Select, MenuItem, Button, Divider, Typography } from "@mui/material";
-import { getScheduleByKey, getScheduleNames, putSchedule } from "./scheduleLocalStorage";
+import {
+	FormControl,
+	InputLabel,
+	Select,
+	MenuItem,
+	Button,
+	Divider,
+	Typography,
+	Dialog,
+	DialogContent,
+	DialogTitle,
+	DialogActions,
+} from "@mui/material";
+import { scheduleStorage } from "./scheduleLocalStorage";
 
 const CenteredDiv = styled.div`
 	display: flex;
@@ -38,23 +50,31 @@ export const ImportTab = (props: { setSchedule: (schedule: Schedule[]) => void }
 	const { setSchedule } = props;
 	const [messageState, setMessageState] = React.useState("");
 	const [selectedSchedule, setSelectedSchedule] = React.useState("None");
+	const [isOverridePopupOpen, setOverridePopupOpen] = React.useState(false);
 
 	const importSchedule = (key: string, contents: string, save: boolean) => {
+		// TODO: for later.
+		// if (save && scheduleStorage.scheduleExists(key)) {
+		// 	// Show popup.
+		// 	setOverridePopupOpen(true);
+		// 	return;
+		// }
+
 		try {
 			const parsedJSON = JSON.parse(contents);
 			const courses = parseSchedules(parsedJSON.classes);
 			const schedules = generateSchedules(courses);
 			const validSchedules = filterInvalidSchedules(schedules);
+
 			setSchedule(validSchedules);
 
 			// TODO: Show popup if already exists?
 			// a) Override b) Store seperatally
-			if (save) putSchedule(key, contents);
+			if (save) scheduleStorage.putSchedule(key, contents);
 
 			setMessageState(
 				[
 					`Succesfully imported ${key}!`,
-					`Name: ${parsedJSON.tag}`,
 					`File Length: ${contents.length} chars`,
 					"",
 					`Total combinations: ${schedules.length}`,
@@ -77,6 +97,28 @@ export const ImportTab = (props: { setSchedule: (schedule: Schedule[]) => void }
 
 	return (
 		<CenteredDiv>
+			<Dialog open={isOverridePopupOpen} fullWidth>
+				<DialogTitle>Duplicate Schedule Name Conflict</DialogTitle>
+				<DialogContent>
+					Warning: There is already a file named 'yyy.json' locally.
+					<br />
+					What do you wish to do?
+				</DialogContent>
+				<DialogActions>
+					<Button onClick={() => setOverridePopupOpen(false)}>Cancel</Button>
+					<Button
+						onClick={() => {
+							setOverridePopupOpen(false);
+						}}
+						color="inherit"
+					>
+						Import but don't save
+					</Button>
+					<Button color="error" onClick={() => setOverridePopupOpen(false)}>
+						Override
+					</Button>
+				</DialogActions>
+			</Dialog>
 			<ImportButtonContainer>
 				<Typography align="left" sx={{ marginBottom: "10px" }}>
 					1. Import JSON locally
@@ -125,7 +167,7 @@ export const ImportTab = (props: { setSchedule: (schedule: Schedule[]) => void }
 						}}
 					>
 						<MenuItem value={"None"}>None</MenuItem>
-						{getScheduleNames().map((scheduleName) => (
+						{scheduleStorage.getAllScheduleKeys().map((scheduleName) => (
 							<MenuItem key={scheduleName} value={scheduleName}>
 								{scheduleName}
 							</MenuItem>
@@ -137,7 +179,7 @@ export const ImportTab = (props: { setSchedule: (schedule: Schedule[]) => void }
 						variant="contained"
 						component="label"
 						onClick={() => {
-							const fileContents = getScheduleByKey(selectedSchedule);
+							const fileContents = scheduleStorage.getScheduleByKey(selectedSchedule);
 
 							if (fileContents) {
 								importSchedule(selectedSchedule, fileContents, false);
@@ -146,7 +188,7 @@ export const ImportTab = (props: { setSchedule: (schedule: Schedule[]) => void }
 					>
 						Import
 					</Button>
-					<Button variant="contained" component="label" color="error">
+					<Button variant="contained" component="label" color="error" disabled>
 						Remove
 					</Button>
 				</SavedScheduleButtonContainer>

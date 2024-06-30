@@ -250,14 +250,20 @@ export const rankSchedules = (schedule: Schedule[], weights: Map<WeightCategory,
 		scoreMap.set(WeightCategory.NO_EARLY_CLASSES, getEarlyClassTimeScore(schedule));
 		scoreMap.set(WeightCategory.NO_LATE_CLASSES, getLateClassTimeScore(schedule));
 
+		// weights
 		const totalScore = Array.from(scoreMap.entries()).reduce(
 			(totalScore, [key, score]) => totalScore + (weights.get(key) ?? 0) * score,
 			0
 		);
 
+		const totalPossibleScore = Array.from(scoreMap.entries()).reduce(
+			(totalScore, [key, score]) => totalScore + (weights.get(key) ?? 0) * 10,
+			0
+		);
+
 		return {
 			classes: schedule,
-			totalScore,
+			totalScore: totalPossibleScore !== 0 ? (totalScore * 10) / totalPossibleScore : 10,
 			scores: scoreMap,
 		};
 	});

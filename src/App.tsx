@@ -19,9 +19,9 @@ const StyledScreenResults = styled.div`
 
 export enum WeightCategory {
 	DAY_OFF = "Day Off",
-	NO_EARLY_CLASSES = "Early Classes",
-	NO_LATE_CLASSES = "Late Classes",
-	BREAK_AMOUNT = "Break Amount",
+	NO_EARLY_CLASSES = "Day Start Time",
+	NO_LATE_CLASSES = "Day End Time",
+	BREAK_AMOUNT = "Break/Class Ratio",
 }
 
 export type Weights = Map<WeightCategory, number>;
@@ -29,10 +29,10 @@ export type Weights = Map<WeightCategory, number>;
 const initializeWeights = () => {
 	const newMap = new Map<WeightCategory, number>();
 
-	newMap.set(WeightCategory.DAY_OFF, 10 / 2);
-	newMap.set(WeightCategory.BREAK_AMOUNT, 1 / 2);
 	newMap.set(WeightCategory.NO_EARLY_CLASSES, 6 / 2);
 	newMap.set(WeightCategory.NO_LATE_CLASSES, 3 / 2);
+	newMap.set(WeightCategory.BREAK_AMOUNT, 1 / 2);
+	newMap.set(WeightCategory.DAY_OFF, 10 / 2);
 
 	return newMap;
 };
@@ -44,7 +44,7 @@ export const App = () => {
 	React.useEffect(() => {
 		setClasses(filterInvalidSchedules(generateSchedules(parseSchedules(schedule.classes))));
 	}, []);
-	const [scheduleIndex, setScheduleIndex] = React.useState<number>(0);
+	const [scheduleIndex, setScheduleIndex] = React.useState<number>(1);
 
 	const rankedSchedules = React.useMemo(() => rankSchedules(classes, weights), [classes, weights]);
 
@@ -54,15 +54,16 @@ export const App = () => {
 	return (
 		<MainContainer>
 			<StyledScreenResults>
-				<ScheduleView selectedSchedule={rankedSchedules[scheduleIndex]} />
+				<ScheduleView selectedSchedule={rankedSchedules[scheduleIndex - 1]} />
 			</StyledScreenResults>
 			<TabBar
 				value={scheduleIndex}
 				setValue={setScheduleIndex}
 				setSchedule={setClasses}
-				selectedSchedule={rankedSchedules[scheduleIndex]}
+				selectedSchedule={rankedSchedules[scheduleIndex - 1]}
 				weights={weights}
 				setWeights={setWeights}
+				maxSchedules={rankedSchedules.length}
 			/>
 		</MainContainer>
 	);

@@ -2,17 +2,24 @@ import React from "react";
 import styled from "styled-components";
 import { Paper } from "@mui/material";
 import { RankedSchedule, Schedule, ScheduledClass, WeekDay, WeekDayName } from "../logic/definitions";
+import { enumToList } from "../utils/objectUtils";
 
 const StyledScheduleView = styled.div`
+	background: #f0f0f0;
+
 	height: 100%;
 	display: flex;
 	gap: 5px;
+
+	&:nth-last-child(n) {
+		padding-right: 5px;
+	}
 `;
 
 export const ScheduleView = (props: { selectedSchedule: RankedSchedule | undefined }) => {
 	const { selectedSchedule } = props;
 	const numTicks = 30;
-	const days = [WeekDay.MONDAY, WeekDay.TUESDAY, WeekDay.WEDNESDAY, WeekDay.THURSDAY, WeekDay.FRIDAY];
+	const days = enumToList(WeekDay);
 
 	const classesByWeek = React.useMemo(() => {
 		return selectedSchedule?.classes.reduce((acc, val) => {
@@ -63,7 +70,8 @@ const StyledTimeIndicator = styled(Paper)`
 `;
 
 const PaddedWeekName = styled.div`
-	height: 31.6px;
+	padding-top: 5px;
+	height: 25px;
 `;
 
 const AbsoluteTimeRegion = styled.div`
@@ -100,11 +108,11 @@ export const Week = (props: { schedule: Schedule | undefined; day: WeekDay; numT
 
 	const bars = Array.from({ length: numTicks }, (_, i) => i);
 	return (
-		<StyledWeekRow elevation={2}>
+		<StyledWeekRow elevation={1}>
 			<PaddedWeekName key={day}>{WeekDayName[day]}</PaddedWeekName>
 			<StyledClassesArea>
 				{bars.map((i) => (
-					<StyledBar key={(100 * i) / numTicks} $halfTick={i % 2 === 0} $position={(100 * i) / numTicks} />
+					<StyledBar key={(100 * i) / numTicks} $halfTick={i % 2 !== 0} $position={(100 * i) / numTicks} />
 				))}
 				{schedule &&
 					schedule.map((aClass) => {
@@ -150,7 +158,7 @@ export const ClassView = (props: { aClass: ScheduledClass; numTicks: number }) =
 
 	return (
 		<StyledClassView $height={endPos - startPos} $position={startPos}>
-			<PaperView elevation={3}>
+			<PaperView elevation={1}>
 				<strong>
 					{aClass.id} {aClass.sectionId}
 				</strong>
