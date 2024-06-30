@@ -73,7 +73,7 @@ export const TabBar = (props: {
 					<Tab label={TabName.CONFIG} value={TabName.CONFIG} />
 				</StyledTabs>
 				{renderSelectedTab()}
-				<VersionContainer>Carleton Schedule Ranker - v.2.0</VersionContainer>
+				<VersionContainer>Carleton Schedule Ranker - v.0.2</VersionContainer>
 			</StyledPaper>
 		</MainContainer>
 	);
