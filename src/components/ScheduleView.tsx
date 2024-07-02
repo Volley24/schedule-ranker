@@ -1,23 +1,41 @@
-import { Paper } from "@mui/material";
-import styled from "styled-components";
-import { RankedSchedule, ScheduledClass, WeekDay, WeekDayName } from "../logic/definitions";
 import React from "react";
+import styled from "styled-components";
+import { Paper } from "@mui/material";
+import { RankedSchedule, Schedule, ScheduledClass, WeekDay, WeekDayName } from "../logic/definitions";
+import { enumToList } from "../utils/objectUtils";
 
 const StyledScheduleView = styled.div`
+	background: #f0f0f0;
+
 	height: 100%;
 	display: flex;
 	gap: 5px;
+
+	&:nth-last-child(n) {
+		padding-right: 5px;
+	}
 `;
 
 export const ScheduleView = (props: { selectedSchedule: RankedSchedule | undefined }) => {
 	const { selectedSchedule } = props;
-	const days = [WeekDay.MONDAY, WeekDay.TUESDAY, WeekDay.WEDNESDAY, WeekDay.THURSDAY, WeekDay.FRIDAY];
+	const numTicks = 30;
+	const days = enumToList(WeekDay);
+
+	const classesByWeek = React.useMemo(() => {
+		return selectedSchedule?.classes.reduce((acc, val) => {
+			if (!acc[val.day]) {
+				acc[val.day] = [];
+			}
+			acc[val.day].push(val);
+			return acc;
+		}, {} as Record<WeekDay, Schedule>);
+	}, [selectedSchedule]);
 
 	return (
 		<StyledScheduleView>
-			<TimeIndication />
+			<TimeIndication numTicks={numTicks} />
 			{days.map((day) => (
-				<Week day={day} schedule={selectedSchedule} />
+				<Week key={day} schedule={classesByWeek?.[day]} day={day} numTicks={numTicks} />
 			))}
 		</StyledScheduleView>
 	);
@@ -52,7 +70,8 @@ const StyledTimeIndicator = styled(Paper)`
 `;
 
 const PaddedWeekName = styled.div`
-	height: 31.6px;
+	padding-top: 5px;
+	height: 25px;
 `;
 
 const AbsoluteTimeRegion = styled.div`
@@ -67,49 +86,49 @@ const AbsoluteTime = styled.div<{ $top: number }>`
 	right: 5%;
 `;
 
-export const TimeIndication = () => {
-	const NUM_TICKS = 30;
-	const times = Array.from({ length: NUM_TICKS }, (_, i) => `${Math.floor(i / 2 + 8)}:${i % 2 === 0 ? "00" : "30"}`);
+export const TimeIndication = ({ numTicks }: { numTicks: number }) => {
+	const times = Array.from({ length: numTicks }, (_, i) => `${Math.floor(i / 2 + 8)}:${i % 2 === 0 ? "00" : "30"}`);
 
 	return (
 		<StyledTimeIndicator>
 			<PaddedWeekName></PaddedWeekName>
 			<AbsoluteTimeRegion>
 				{times.map((time, i) => (
-					<AbsoluteTime $top={(100 * i) / NUM_TICKS}>{time}</AbsoluteTime>
+					<AbsoluteTime $top={(100 * i) / numTicks} key={time}>
+						{time}
+					</AbsoluteTime>
 				))}
 			</AbsoluteTimeRegion>
 		</StyledTimeIndicator>
 	);
 };
 
-export const Week = (props: { schedule: RankedSchedule | undefined; day: WeekDay }) => {
-	const { schedule, day } = props;
-	const NUM_TICKS = 30;
+export const Week = (props: { schedule: Schedule | undefined; day: WeekDay; numTicks: number }) => {
+	const { schedule, day, numTicks } = props;
 
-	const bars = Array.from({ length: NUM_TICKS }, (_, i) => i);
+	const bars = Array.from({ length: numTicks }, (_, i) => i);
 	return (
-		<StyledWeekRow elevation={2}>
-			<PaddedWeekName>{WeekDayName[day]}</PaddedWeekName>
+		<StyledWeekRow elevation={1}>
+			<PaddedWeekName key={day}>{WeekDayName[day]}</PaddedWeekName>
 			<StyledClassesArea>
 				{bars.map((i) => (
-					<StyledBar $halfTick={i % 2 === 0} $position={(100 * i) / NUM_TICKS} />
+					<StyledBar key={(100 * i) / numTicks} $halfTick={i % 2 !== 0} $position={(100 * i) / numTicks} />
 				))}
 				{schedule &&
-					schedule.classes.map((aClass, index) => {
-						if (aClass.day === day) return <ClassView aClass={aClass} key={index} numTicks={NUM_TICKS} />;
-						return <></>;
+					schedule.map((aClass) => {
+						return (
+							<ClassView key={`${aClass.id}-${aClass.sectionId}`} aClass={aClass} numTicks={numTicks} />
+						);
 					})}
 			</StyledClassesArea>
 		</StyledWeekRow>
 	);
 };
 
-const StyledClassView = styled.div<{ position: number; height: number }>`
+const StyledClassView = styled.div<{ $position: number; $height: number }>`
 	position: absolute;
-	top: ${(props) => props.position}%;
-	height: ${(props) => props.height}%;
-	/* margin-top: 5px; */
+	top: ${(props) => props.$position}%;
+	height: ${(props) => props.$height}%;
 
 	flex: 1;
 	text-align: center;
@@ -128,31 +147,25 @@ const PaperView = styled(Paper)`
 	height: 100%;
 `;
 
-const PaddedView = styled.div`
-	padding: 0 5px;
-	width: 100%;
-	box-sizing: border-box;
-`;
-
 export const ClassView = (props: { aClass: ScheduledClass; numTicks: number }) => {
 	const { aClass, numTicks } = props;
 
 	const mul = (100 * 2) / numTicks;
 	const hoursOffset = 8;
 
-	// TODO: Migrate to table approach
-	// Since this math is just funny numbers
 	const startPos = aClass.time.startTime.hours * mul + aClass.time.startTime.minutes * (mul / 60) - hoursOffset * mul;
 	const endPos = aClass.time.endTime.hours * mul + aClass.time.endTime.minutes * (mul / 60) - hoursOffset * mul;
 
 	return (
-		<StyledClassView height={endPos - startPos} position={startPos}>
-			<PaperView elevation={3}>
+		<StyledClassView $height={endPos - startPos} $position={startPos}>
+			<PaperView elevation={1}>
 				<strong>
 					{aClass.id} {aClass.sectionId}
 				</strong>
 				<br />
-				{aClass.time.startTime.toString()} - {aClass.time.endTime.toString()}
+				{aClass.time.toString()}
+				<br />
+				{aClass.prof}
 				<br />
 				{aClass.isOnline && "ONLINE"}
 			</PaperView>

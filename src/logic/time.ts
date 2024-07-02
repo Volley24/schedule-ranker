@@ -8,10 +8,12 @@ export enum TimeErrors {
 
 export const DayOfWeek = ["sun", "mon", "tue", "wed", "thur", "fri", "sat"];
 
-// we need a utility class for dates since it's all over the place...
-
 export class TimeRange {
 	constructor(public startTime: Time, public endTime: Time) {}
+
+	toString() {
+		return `${this.startTime.toString()} - ${this.endTime.toString()}`;
+	}
 
 	durationFormatted() {
 		return this.startTime.durationFormatted(this.endTime);
@@ -68,9 +70,6 @@ export class Time {
 
 	getDecimalHour(): number {
 		const decimalMinutes = this.minutes / 60;
-
-		// 5:45 - 6:15 = 6PM
-		// 6:16 - 6:44
 
 		return this.hours + (decimalMinutes > 0.25 && decimalMinutes < 0.75 ? 0.5 : 0);
 	}

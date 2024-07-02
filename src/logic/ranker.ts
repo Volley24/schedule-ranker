@@ -1,3 +1,4 @@
+import { WeightCategory } from "../App";
 import { Course, LabSection, RankedSchedule, RawCourse, Schedule, ScheduledClass, WeekDay } from "./definitions";
 import { TimeRange } from "./time";
 
@@ -6,17 +7,11 @@ import { TimeRange } from "./time";
  * @param schedule A list of classes which is sorted by start time and days, and which does not have any overlapping classes.
  * @returns A sorted schedule with the "best" schedules at the start, and the "worst" ones at the bottom.
  */
-export const rankByFreeDays = (schedule: Schedule[]): RankedSchedule[] => {
+export const rankSchedules = (schedule: Schedule[], weights: Map<WeightCategory, number>): RankedSchedule[] => {
 	let dayRecord: Record<string, boolean> = {};
 
 	// Sliders to control the weights
 	// It doesn't matter what they add up to.
-	const weights = {
-		dayOff: 10 / 2,
-		startTime: 6 / 2,
-		lateTime: 3 / 2,
-		breakScore: 1 / 2,
-	};
 
 	// Would be nice to have a data structure for the classes already sorted + in their respect weeks.
 	// As most of these algorithms will use that in some way.
@@ -244,39 +239,32 @@ export const rankByFreeDays = (schedule: Schedule[]): RankedSchedule[] => {
 				} else {
 					return acc + 10;
 				}
-
-				// mauvais
-
-				// uhhh idfk man
-				// find a ratio, and do linear ??? i rly don't know.
-
-				// ratio is 2h class : 1h break (2h labs equal 1h class)
-
-				// 2:1 => 3:1 !!!
-				//
 			}, 0) / Object.keys(breakRecord).length
 		);
 	};
 
 	const rankedSchedules: RankedSchedule[] = schedule.map((schedule) => {
-		const dayOffScore = getDayOffScore(schedule);
-		const earlyClassScore = getEarlyClassTimeScore(schedule);
-		const breakScore = getBreakScore(schedule);
-		const lateClassScore = getLateClassTimeScore(schedule);
+		const scoreMap = new Map<WeightCategory, number>();
+		scoreMap.set(WeightCategory.BREAK_AMOUNT, getBreakScore(schedule));
+		scoreMap.set(WeightCategory.DAY_OFF, getDayOffScore(schedule));
+		scoreMap.set(WeightCategory.NO_EARLY_CLASSES, getEarlyClassTimeScore(schedule));
+		scoreMap.set(WeightCategory.NO_LATE_CLASSES, getLateClassTimeScore(schedule));
 
-		const totalScore =
-			dayOffScore * (weights.dayOff / 10) +
-			earlyClassScore * (weights.startTime / 10) +
-			breakScore * (weights.breakScore / 10) +
-			lateClassScore * (weights.lateTime / 10);
+		// weights
+		const totalScore = Array.from(scoreMap.entries()).reduce(
+			(totalScore, [key, score]) => totalScore + (weights.get(key) ?? 0) * score,
+			0
+		);
+
+		const totalPossibleScore = Array.from(scoreMap.entries()).reduce(
+			(totalScore, [key, score]) => totalScore + (weights.get(key) ?? 0) * 10,
+			0
+		);
 
 		return {
 			classes: schedule,
-			totalScore,
-			breakScore: getBreakScore(schedule),
-			dayOffScore: getDayOffScore(schedule),
-			earlyClassScore: getEarlyClassTimeScore(schedule),
-			lateClassScore: getLateClassTimeScore(schedule),
+			totalScore: totalPossibleScore !== 0 ? (totalScore * 10) / totalPossibleScore : 10,
+			scores: scoreMap,
 		};
 	});
 
@@ -327,7 +315,8 @@ export const getNumOfCombinations = (courses: Course[]) => {
 		let combinationsHere = 0;
 
 		if (course.labSections.length === 0) {
-			combinationsHere += course.labSections.length;
+			combinations *= course.sections.length;
+			return;
 		}
 
 		course.labSections.forEach((lab) => {
@@ -340,12 +329,11 @@ export const getNumOfCombinations = (courses: Course[]) => {
 			combinations *= combinationsHere;
 		}
 	});
-	console.log(`There SHOULD be ${combinations} combinations of schedules.`);
 	return combinations;
 };
 
-export const altnerateFilterInvalidSchedules = (schedules: Schedule[]) => {
-	return schedules
+export const filterInvalidSchedules = (schedules: Schedule[]) => {
+	const filtered = schedules
 		.map((schedule) =>
 			schedule.sort((a, b) => {
 				if (a.day !== b.day) return a.day - b.day;
@@ -367,77 +355,11 @@ export const altnerateFilterInvalidSchedules = (schedules: Schedule[]) => {
 			}
 			return true;
 		});
+	return filtered;
 };
 
-/**
- * @deprecated Use altnerateFilterInvalidSchedules as the performance is around the same, with the added bonus of returning a sorted list, which is needed for some of the ranking algorithms
- */
-export const filterInvalidSchedules = (schedules: Schedule[]) => {
-	return schedules.filter((schedule) => {
-		const isValid = (classA: ScheduledClass, classB: ScheduledClass) => {
-			if (classA.day !== classB.day) {
-				return true;
-			}
-			const timeA = classA.time;
-			const timeB = classB.time;
-
-			if (
-				timeA.startTime.isBetween(timeB.startTime, timeB.endTime) ||
-				timeA.endTime.isBetween(timeB.startTime, timeB.endTime)
-			) {
-				return false;
-			}
-
-			if (
-				timeB.startTime.isBetween(timeA.startTime, timeA.endTime) ||
-				timeB.endTime.isBetween(timeA.startTime, timeA.endTime)
-			) {
-				return false;
-			}
-
-			return true;
-		};
-
-		for (let i = 0; i < schedule.length; i++) {
-			for (let j = 0; j < schedule.length; j++) {
-				const classA = schedule[i];
-				const classB = schedule[j];
-				if (classA === classB) {
-					continue;
-				}
-
-				const result = isValid(classA, classB);
-				if (!result) return false;
-			}
-		}
-		return true;
-	});
-};
-
-// export const generateAndFilter = (useNew: boolean): Schedule[] => {
-// 	console.time("Schedule Generator");
-// 	const generated = generateSchedules(MAIN_SCHEDULE);
-// 	console.log(`Number of possible schedule combinations: ${generated.length}.`);
-// 	console.timeEnd("Schedule Generator");
-
-// 	console.time(`Invalid Schedule Filterer`);
-// 	const filtered = filterInvalidSchedules(generated);
-// 	console.log(`Number of possible VALID schedule combinations: ${filtered.length}.`);
-// 	console.timeEnd(`Invalid Schedule Filterer`);
-
-// 	console.time(`Invalid Schedule Filterer NEW`);
-// 	const altFiltered = altnerateFilterInvalidSchedules(generated);
-// 	console.log(`\n\nNumber of possible VALID schedule combinations (new): ${altFiltered.length}.`);
-// 	console.timeEnd(`Invalid Schedule Filterer NEW`);
-
-// 	return filtered;
-// };
-
-// now each class only has one day
-// TODO: ScheduledClass should now have day: WeekDay.
 export const generateSchedules = (courses: Course[]): Schedule[] => {
-	console.time("Schedule Generator");
-
+	console.log("Generating schedules...");
 	const schedules: Schedule[] = [];
 
 	const recurse = (schedule: Schedule = [], index: number) => {

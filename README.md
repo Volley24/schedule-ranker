@@ -6,17 +6,12 @@ A web app coded using React and Typescript which attemps to find the best possib
 
 Currently, there is no hosted website for this; however, since this is a static web app, finding a free hosting service should be relativally easy. (As a matter of fact, github can host these, so this might be deployed to github pages)
 
-# How to run
+# How to access
 
-Since this project is based on create-react-app:
+The latest version can be found at https://volley24.github.io/schedule-ranker/.
 
-Make sure you have `npm` installed, and then:
-
--   `npm start`: Runs app in development mode at localhost:3000.
--   `npm run build`: Builds the app for production to the `build` folder.
-
-(See https://facebook.github.io/create-react-app/docs/getting-started for more information)
+**Please note that the schedule ranker is currently in pre-release mode, and bugs/inconsistencies may arrise at any time.**
 
 # Changelog
 
-See CHANGELOG.md for a list of upcoming and current features.
+See the [changelog](CHANGELOG.md) for a list of upcoming and current features, as well as the current version.

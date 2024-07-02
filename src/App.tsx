@@ -1,11 +1,10 @@
 import React from "react";
 import styled from "styled-components";
 import { TabBar } from "./components/TabBar";
-import { altnerateFilterInvalidSchedules, generateSchedules, parseSchedules, rankByFreeDays } from "./logic/ranker";
+import { filterInvalidSchedules, generateSchedules, parseSchedules, rankSchedules } from "./logic/ranker";
 import { ScheduleView } from "./components/ScheduleView";
 import schedule from "./logic/schedule.json";
-import { TableScheduleView } from "./components/TableScheduleView";
-import { Course } from "./logic/definitions";
+import { Schedule } from "./logic/definitions";
 
 const MainContainer = styled.div`
 	display: flex;
@@ -18,31 +17,53 @@ const StyledScreenResults = styled.div`
 	flex: 1;
 `;
 
+export enum WeightCategory {
+	DAY_OFF = "Day Off",
+	NO_EARLY_CLASSES = "Day Start Time",
+	NO_LATE_CLASSES = "Day End Time",
+	BREAK_AMOUNT = "Break/Class Ratio",
+}
+
+export type Weights = Map<WeightCategory, number>;
+
+const initializeWeights = () => {
+	const newMap = new Map<WeightCategory, number>();
+
+	newMap.set(WeightCategory.NO_EARLY_CLASSES, 6 / 2);
+	newMap.set(WeightCategory.NO_LATE_CLASSES, 3 / 2);
+	newMap.set(WeightCategory.BREAK_AMOUNT, 1 / 2);
+	newMap.set(WeightCategory.DAY_OFF, 10 / 2);
+
+	return newMap;
+};
+
 export const App = () => {
-	const [classes, setClasses] = React.useState<Course[]>(parseSchedules(schedule.classes)); // default
-	const [scheduleIndex, setScheduleIndex] = React.useState<number>(0);
+	const [classes, setClasses] = React.useState<Schedule[]>([]);
+	const [weights, setWeights] = React.useState<Weights>(initializeWeights);
 
-	const rankedSchedules = React.useMemo(
-		() => rankByFreeDays(altnerateFilterInvalidSchedules(generateSchedules(classes))),
-		[classes]
-	);
+	React.useEffect(() => {
+		setClasses(filterInvalidSchedules(generateSchedules(parseSchedules(schedule.classes))));
+	}, []);
+	const [scheduleIndex, setScheduleIndex] = React.useState<number>(1);
 
-	console.log(rankedSchedules.length);
+	const rankedSchedules = React.useMemo(() => rankSchedules(classes, weights), [classes, weights]);
 
+	// Maybe we should be defining the tabs of tab bar...
+	// Else, we need prop drill EVERYTHING!!!
+	// Or use redux lmao
 	return (
 		<MainContainer>
 			<StyledScreenResults>
-				{/* <button onClick={() => generateAndFilter(false)}>Generate #1</button>
-				<button onClick={() => generateAndFilter(true)}>Generate #2</button>
-
-				<button onClick={() => getNumOfCombinations(MAIN_SCHEDULE)}>COMBINATIONS</button> */}
-				<ScheduleView selectedSchedule={rankedSchedules[scheduleIndex]} />
+				<ScheduleView selectedSchedule={rankedSchedules[scheduleIndex - 1]} />
 			</StyledScreenResults>
 			<TabBar
 				value={scheduleIndex}
 				setValue={setScheduleIndex}
-				selectedSchedule={rankedSchedules[scheduleIndex]}
-				setSchedule={(a) => setClasses(a)}
+				setSchedule={setClasses}
+				selectedSchedule={rankedSchedules[scheduleIndex - 1]}
+				weights={weights}
+				setWeights={setWeights}
+				maxSchedules={rankedSchedules.length}
 			/>
 		</MainContainer>
 	);

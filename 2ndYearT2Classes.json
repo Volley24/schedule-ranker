@@ -1,0 +1,66 @@
+{
+	"tag": "Comp Sys 2nd Year 2nd Sem",
+	"classes": [
+		{
+			"id": "MATH 2004",
+			"name": "Multivariable Cal. Eng or Phys",
+			"sections": [
+				"B,Unknown,Wed/Fri,10:05 - 11:25",
+				"C,Unknown,Mon/Wed,18:05 - 19:25",
+				"D,Unknown,Wed/Fri,11:35 - 12:55",
+				"E,Unknown,Tue/Thu,10:05 - 11:25"
+			],
+			"labSections": [
+				"B,BT,Unknown,Wed,16:35 - 17:25",
+				"C,CT,Unknown,Mon,19:35 - 20:25",
+				"D,DT,Unknown,Fri,16:35 - 17:25",
+				"E,ET,Unknown,Thu,18:05 - 18:55"
+			]
+		},
+		{
+			"id": "SYSC 2004",
+			"name": "Object-Oriented Software Development",
+			"sections": ["D,Lynn Marshall,Tue/Thu,14:35 - 15:55", "E,Cristina Ruiz Martin,Tue/Thu,16:05 - 17:25"],
+			"labSections": [
+				"D/E,L1/L2,Unknown,Fri,16:05 - 17:55",
+				"D/E,L3/L4,Unknown,Tue,11:35 - 13:25",
+				"D/E,L5/L6,Unknown,Mon,16:35 - 18:25",
+				"D/E,L7/L8,Unknown,Wed,09:35 - 11:25"
+			]
+		},
+		{
+			"id": "SYSC 2100",
+			"name": "Algorithms and Data Structures",
+			"sections": ["A,Safaa Bedawi,Wed/Fri,11:35 - 12:55", "B,Safaa Bedawi,Tue/Thu,13:05 - 14:25"],
+			"labSections": [
+				"A/B,L1,Unknown,Mon,11:35 - 13:25",
+				"A/B,L2,Unknown,Thu,09:35 - 11:25",
+				"A/B,L3,Unknown,Mon,09:35 - 11:25",
+				"A/B,L4,Unknown,Mon,14:35 - 16:25",
+				"A/B,L5,Unknown,Fri,09:35 - 11:25"
+			]
+		},
+		{
+			"id": "SYSC 2320",
+			"name": "Intro. Computer Org. and Arch.",
+			"sections": ["A,Mohamed Atia,Tue/Thu,16:05 - 17:25", "B,Unknown,Tue/Thu,08:35 - 09:55"],
+			"labSections": [
+				"A/B,L1,Unknown,Tue,08:35 - 11:25",
+				"A/B,L2,Unknown,Wed,14:35 - 17:25",
+				"A/B,L3,Unknown,Thu,11:35 - 14:25",
+				"A/B,L4/L6,Unknown,Mon,08:35 - 11:25",
+				"A/B,L5,Unknown,Fri,08:35 - 11:25"
+			]
+		},
+		{
+			"id": "SYSC 2510",
+			"name": "Probability & Random Processes",
+			"sections": ["A,Unknown,Wed/Fri,13:05 - 14:25"],
+			"labSections": [
+				"A,L1O,Unknown,Tue,11:35 - 14:25",
+				"A,L2O,Unknown,Wed,08:35 - 11:25",
+				"A,L3O,Unknown,Fri,08:35 - 11:25"
+			]
+		}
+	]
+}
