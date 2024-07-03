@@ -1,16 +1,20 @@
-# University Schedule Generator
+# Carleton Schedule Ranker
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 A web app coded using React and Typescript which attemps to find the best possible schedule given a list of classes, by ranking every combination of classes possible and allowing the user to customize the weights.
 
-Currently, there is no hosted website for this; however, since this is a static web app, finding a free hosting service should be relativally easy. (As a matter of fact, github can host these, so this might be deployed to github pages)
-
 # How to access
 
-The latest version can be found at https://volley24.github.io/schedule-ranker/.
+The latest version can be found at https://cuschedule.netlify.app.
 
-**Please note that the schedule ranker is currently in pre-release mode, and bugs/inconsistencies may arrise at any time.**
+The latest alpha version, which usually includes newer features at the cost of being less stable, can be found here: https://alpha--cuschedule.netlify.app.
+
+**Latest Stable Version:** v.0.2.1
+
+**Latest Alpha Version:** Same as Stable
+
+Please note that the schedule ranker is currently in pre-release mode, and bugs/inconsistencies may arrise at any time. Please report a bug or suggest new features if you have any.
 
 # Changelog
 
