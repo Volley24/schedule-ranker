@@ -25,6 +25,11 @@ const VersionContainer = styled.div`
 	left: 7px;
 `;
 
+const CopyrightText = styled.div`
+	padding-top: 10px;
+	font-size: 10px;
+`;
+
 enum TabName {
 	IMPORT = "Import",
 	CONFIG = "Config",
@@ -73,7 +78,12 @@ export const TabBar = (props: {
 					<Tab label={TabName.CONFIG} value={TabName.CONFIG} />
 				</StyledTabs>
 				{renderSelectedTab()}
-				<VersionContainer>Carleton Schedule Ranker - v.0.2</VersionContainer>
+				<VersionContainer>
+					Carleton Schedule Ranker - v.0.2.1
+					<br />
+					Made by Maxim Creanga - <a href="https://github.com/Volley24/schedule-ranker">Github Link</a>
+					<CopyrightText>© 2024 Carleton Schedule Ranker. All Rights Reserved.</CopyrightText>
+				</VersionContainer>
 			</StyledPaper>
 		</MainContainer>
 	);
