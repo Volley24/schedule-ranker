@@ -5,6 +5,7 @@ import { Paper, Tabs, Tab } from "@mui/material";
 import { RankedSchedule, Schedule } from "../logic/definitions";
 import { ConfigTab } from "./tabs/ConfigTab";
 import { Weights } from "../App";
+import { AppNotice } from "./AppNotice";
 
 const StyledPaper = styled(Paper)`
 	height: 100%;
@@ -19,16 +20,6 @@ const MainContainer = styled.div`
 	position: relative;
 `;
 
-const VersionContainer = styled.div`
-	position: absolute;
-	bottom: 5px;
-	left: 7px;
-`;
-
-const CopyrightText = styled.div`
-	padding-top: 10px;
-	font-size: 10px;
-`;
 
 enum TabName {
 	IMPORT = "Import",
@@ -78,12 +69,7 @@ export const TabBar = (props: {
 					<Tab label={TabName.CONFIG} value={TabName.CONFIG} />
 				</StyledTabs>
 				{renderSelectedTab()}
-				<VersionContainer>
-					Carleton Schedule Ranker - v.0.2.1
-					<br />
-					Made by Maxim Creanga - <a href="https://github.com/Volley24/schedule-ranker">Github Link</a>
-					<CopyrightText>© 2024 Carleton Schedule Ranker. All Rights Reserved.</CopyrightText>
-				</VersionContainer>
+				<AppNotice />
 			</StyledPaper>
 		</MainContainer>
 	);
