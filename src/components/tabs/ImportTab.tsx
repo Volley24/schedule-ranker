@@ -16,6 +16,7 @@ import {
 	DialogActions,
 } from "@mui/material";
 import { scheduleStorage } from "./scheduleLocalStorage";
+import { CreateScheduleDialog } from "./CreateScheduleDialog";
 
 const CenteredDiv = styled.div`
 	display: flex;
@@ -51,6 +52,8 @@ export const ImportTab = (props: { setSchedule: (schedule: Schedule[]) => void }
 	const [messageState, setMessageState] = React.useState("");
 	const [selectedSchedule, setSelectedSchedule] = React.useState("None");
 	const [isOverridePopupOpen, setOverridePopupOpen] = React.useState(false);
+
+	const [isCreatingClasses, setCreatingClasses] = React.useState(false);
 
 	const importSchedule = (key: string, contents: string, save: boolean) => {
 		// TODO: for later.
@@ -97,28 +100,7 @@ export const ImportTab = (props: { setSchedule: (schedule: Schedule[]) => void }
 
 	return (
 		<CenteredDiv>
-			<Dialog open={isOverridePopupOpen} fullWidth>
-				<DialogTitle>Duplicate Schedule Name Conflict</DialogTitle>
-				<DialogContent>
-					Warning: There is already a file named 'yyy.json' locally.
-					<br />
-					What do you wish to do?
-				</DialogContent>
-				<DialogActions>
-					<Button onClick={() => setOverridePopupOpen(false)}>Cancel</Button>
-					<Button
-						onClick={() => {
-							setOverridePopupOpen(false);
-						}}
-						color="inherit"
-					>
-						Import but don't save
-					</Button>
-					<Button color="error" onClick={() => setOverridePopupOpen(false)}>
-						Override
-					</Button>
-				</DialogActions>
-			</Dialog>
+			<CreateScheduleDialog open={isCreatingClasses} close={() => setCreatingClasses(false)} />
 			<ImportButtonContainer>
 				<Typography align="left" sx={{ marginBottom: "10px" }}>
 					1. Import JSON locally
@@ -141,6 +123,9 @@ export const ImportTab = (props: { setSchedule: (schedule: Schedule[]) => void }
 							}
 						}}
 					/>
+				</Button>
+				<Button variant="contained" component="label" onClick={() => setCreatingClasses(true)}>
+					Add Classes
 				</Button>
 			</ImportButtonContainer>
 

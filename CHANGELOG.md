@@ -4,7 +4,8 @@ Dates are in YYYY/MM/DD
 
 **Latest Version:** v.0.2.1
 
-# Current
+## v.0.3.0 - 2024/X/Y
+-	[ ] Add course creator where users can type the course details and add sections / lab sections.
 
 ## v.0.2.1 - 2024/7/3
 
