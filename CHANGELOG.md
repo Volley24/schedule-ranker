@@ -8,13 +8,18 @@ Dates are in YYYY/MM/DD
 -	Added a new interface which allows users to add courses, and their respective lecture / lab sections.
     - TODO: Need to add a way for an imported schedule to be further edited by this UI.
 
-## v.0.2.1 - 2024/7/3
+## v.0.2.2 - 2025/05/21
+
+-   Isolate app notice / copyright notice to seperate component.
+-   Updated copyright notice to include 2025.
+
+## v.0.2.1 - 2024/07/3
 
 -   Added copyright notice + github link.
 -   Updated README.md.
 -   Fixed formatting issues in CHANGELOG.
 
-## v.0.2 - 2024/6/30
+## v.0.2 - 2024/06/30
 
 **UI:**
 
