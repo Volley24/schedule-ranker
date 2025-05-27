@@ -1,7 +1,7 @@
 import React from "react";
 import styled from "styled-components";
-import { parseSchedules, generateSchedules, filterInvalidSchedules } from "../../logic/ranker";
-import { Schedule } from "../../logic/definitions";
+import { parseSchedules, generateSchedules, filterInvalidSchedules, mapDayToWeekDay, mapDayWeekToDay } from "../../logic/ranker";
+import { ClassSection, Course, LabSection, Schedule } from "../../logic/definitions";
 import {
 	FormControl,
 	InputLabel,
@@ -10,13 +10,11 @@ import {
 	Button,
 	Divider,
 	Typography,
-	Dialog,
-	DialogContent,
-	DialogTitle,
-	DialogActions,
 } from "@mui/material";
 import { scheduleStorage } from "./scheduleLocalStorage";
-import { CreateScheduleDialog } from "./CreateScheduleDialog";
+import { CreateScheduleDialog } from "./schedule_create/CreateScheduleDialog";
+import { UICourse, UISection } from "./logic/courses";
+import { Time, TimeRange } from "../../logic/time";
 
 const CenteredDiv = styled.div`
 	display: flex;
@@ -54,6 +52,97 @@ export const ImportTab = (props: { setSchedule: (schedule: Schedule[]) => void }
 	const [isOverridePopupOpen, setOverridePopupOpen] = React.useState(false);
 
 	const [isCreatingClasses, setCreatingClasses] = React.useState(false);
+
+	const onCloseAndSave = (scheduleName: string, courses: UICourse[]) => {
+		//const a: Course = {};
+
+		const mapUISectionToClassSection = (section: UISection): ClassSection => ({
+			days: section.days.trim().split(",").map((day) => mapDayToWeekDay(day.trim())),
+			time: new TimeRange(Time.create(section.startTime), Time.create(section.endTime)),
+			sectionId: section.section,
+			prof: section.profName,
+			isOnline: section.isOnline,
+		});
+
+		// Convert UICourse to Course
+		const convertedCourses: Course[] = courses.map((course) => ({
+			id: course.id,
+			name: course.id,
+			sections: course.sections
+				.filter((section) => !section.isLab)
+				.map((section): ClassSection => {
+					
+					console.log("Days:", section.days);
+					console.log("Days split:", section.days.split(","));
+					console.log("Days mapped:", section.days.trim().split(",").map((day) => mapDayToWeekDay(day.trim())));
+
+					
+					return ({
+						...mapUISectionToClassSection(section),
+					})}),
+			labSections: course.sections
+				.filter((section) => section.isLab)
+				.map((section): LabSection => ({
+					...mapUISectionToClassSection(section),
+					classSectionIds: section.validSections.split(",").map((id) => id.trim()),
+				})),
+		}));
+
+
+		const schedules = generateSchedules(convertedCourses);
+		const validSchedules = filterInvalidSchedules(schedules);
+
+		setSchedule(validSchedules);
+
+		// Ok this is kinda like the most important part.
+		/*
+		{
+			"id": "MATH 1005",
+			"name": "Diff. Eqs. & Series Eng. & Phy",
+			"sections": [
+				"A,Ayse Alaca,Wed/Fri,10:05 - 11:25",
+				"B,Ayse Alaca,Mon/Wed,11:35 - 12:55",
+				"C,Unknown,Tue/Thu,08:35 - 09:55",
+				"D,Unknown,Tue/Thu,14:35 - 15:55",
+				"E,Unknown,Mon/Wed,18:05 - 19:25",
+				"F,Unknown,Tue/Thu,19:35 - 20:55"
+			],
+			"labSections": [
+				"A,AT,a,Wed,17:35 - 18:25",
+				"B,BT,a,Mon,14:35 - 15:25",
+				"C,CT,a,Thu,13:35 - 14:25",
+				"D,DT,a,Thu,17:35 - 18:25",
+				"E,ET,a,Wed,19:35 - 20:25",
+				"F,FT,a,Thu,21:05 - 21:55"
+			]
+		}
+		*/
+		// Convert convertedCourses -> "JSON string notation". Here is an example:
+
+		// "A,Shaghayegh Gomar,Mon/Wed,08:35 - 09:55"
+		const scheduleJSON = JSON.stringify(
+			{
+				classes: convertedCourses.map((course) => ({
+					id: course.id,
+					name: course.name,
+					sections: course.sections.map((section) => {
+						console.log("Section days:", section.days);
+						console.log("Section days mapped:", section.days.map((dayOfWeek) => mapDayWeekToDay(dayOfWeek)));
+						return `${section.sectionId},${section.prof},${section.days.map((dayOfWeek) => mapDayWeekToDay(dayOfWeek)).join("/")},${section.time.format24h()}`;
+					}),
+					labSections: course.labSections.map((section) => {
+						return `${section.classSectionIds},${section.sectionId},${section.prof},${section.days.map((dayOfWeek) => mapDayWeekToDay(dayOfWeek)).join("/")},${section.time.format24h()}`;
+					}),
+				})),
+			}
+		);
+
+		console.log("Converted Courses JSON:", scheduleJSON);
+		// save to local storage.
+		if (scheduleName) {
+			scheduleStorage.putSchedule(scheduleName, scheduleJSON);
+		}
+	};
 
 	const importSchedule = (key: string, contents: string, save: boolean) => {
 		// TODO: for later.
@@ -100,7 +189,7 @@ export const ImportTab = (props: { setSchedule: (schedule: Schedule[]) => void }
 
 	return (
 		<CenteredDiv>
-			<CreateScheduleDialog open={isCreatingClasses} close={() => setCreatingClasses(false)} />
+			<CreateScheduleDialog open={isCreatingClasses} close={() => setCreatingClasses(false)} onCreateAndSave={onCloseAndSave}/>
 			<ImportButtonContainer>
 				<Typography align="left" sx={{ marginBottom: "10px" }}>
 					1. Import JSON locally

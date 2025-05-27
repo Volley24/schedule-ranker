@@ -1,15 +1,15 @@
 import { createSlice, configureStore, PayloadAction } from "@reduxjs/toolkit";
 
-export type CourseState = {
-	courses: Course[];
-	selectedCourse: Course | undefined;
+export type UICourseState = {
+	courses: UICourse[];
+	selectedCourse: UICourse | undefined;
 };
-export type Course = {
+export type UICourse = {
 	id: string;
-	sections: Section[];
+	sections: UISection[];
 };
 
-export type Section = {
+export type UISection = {
 	crn: string;
 	section: string;
 
@@ -20,32 +20,35 @@ export type Section = {
 
 	isOnline: boolean;
 	isLab: boolean;
-	validSections?: string[];
+	validSections: string;
 };
 
 const coursesSlice = createSlice({
 	name: "courses",
 	initialState: {
 		value: {
-			courses: [] as Course[],
+			courses: [] as UICourse[],
 			selectedCourse: undefined,
-		} as CourseState,
+		} as UICourseState,
 	},
 	reducers: {
-		addCourse: (state, action: PayloadAction<string>) => {
-			state.value.courses.push({ id: action.payload, sections: [] });
+		addCourse: (state) => {
+			state.value.courses.push({ id: "", sections: [] });
 		},
-		removeCourse: (state, action: PayloadAction<string>) => {
-			// todo
+		removeLastCourse: (state) => {
+			// remove the last course if it exists
+			if (state.value.courses.length > 0) {
+				state.value.courses.pop();
+			}
 		},
 
 		addCourseSection: (
 			state,
 			action: PayloadAction<{
-				courseId: string;
+				courseIndex: number;
 			}>
 		) => {
-			const course = state.value.courses.find((course) => course.id === action.payload.courseId);
+			const course = state.value.courses[action.payload.courseIndex];
 			course?.sections.push({
 				crn: "",
 				section: "",
@@ -55,62 +58,56 @@ const coursesSlice = createSlice({
 				profName: "",
 				isOnline: false,
 				isLab: false,
+				validSections: "",
 			});
 		},
-		removeCourseSection: () => {},
+		removeLastCourseSection: (state) => {
+			// remove the last section of the last course if it exists
+			const lastCourse = state.value.courses[state.value.courses.length - 1];
+			if (lastCourse && lastCourse.sections.length > 0) {
+				lastCourse.sections.pop();
+			}
+		},
 
 		editCourseId: (
 			state,
 			action: PayloadAction<{
-				courseId: string;
+				courseIndex: number;
 				newCourseId: string;
 			}>
 		) => {
-			const course = state.value.courses.find((course) => course.id === action.payload.courseId);
+			const course = state.value.courses[action.payload.courseIndex];
 			if (course) {
 				course.id = action.payload.newCourseId;
 			}
 		},
-		editSection: (
+		editSectionByIndex: (
 			state,
 			action: PayloadAction<{
 				courseId: string;
-				sectionCrn: string;
-				newSection: Partial<Section>;
+				sectionIndex: number;
+				newSection: Partial<UISection>;
 			}>
 		) => {
-			const courseIndex = state.value.courses.findIndex((course) => course.id === action.payload.courseId);
-			if (courseIndex !== -1) {
-				const course = state.value.courses[courseIndex];
-				course.sections = {
-					...course.sections,
-					[courseIndex]: {
-						...course.sections[courseIndex],
-						...action.payload.newSection,
-					},
-				};
+			const course = state.value.courses.find((course) => course.id === action.payload.courseId);
+			if (course) {
+				const section = course.sections[action.payload.sectionIndex]
+				if (section) {
+					Object.assign(section, action.payload.newSection);
+				}
 			}
+		},
+		setSelectedCourse: (
+			state,
+			action: PayloadAction<UICourse | undefined>
+		) => {
+			state.value.selectedCourse = action.payload;
 		},
 	},
 });
 
-export const { addCourse, addCourseSection, editCourseId, editSection } = coursesSlice.actions;
+export const { addCourse, addCourseSection, removeLastCourse, editCourseId, editSectionByIndex, setSelectedCourse, removeLastCourseSection } = coursesSlice.actions;
 
 export const coursesStore = configureStore({
 	reducer: coursesSlice.reducer,
 });
-
-// const store = configureStore({
-// 	reducer: counterSlice.reducer,
-// });
-
-// // Can still subscribe to the store
-// store.subscribe(() => console.log(store.getState()));
-
-// // Still pass action objects to `dispatch`, but they're created for us
-// store.dispatch(incremented());
-// // {value: 1}
-// store.dispatch(incremented());
-// // {value: 2}
-// store.dispatch(decremented());
-// // {value: 1}

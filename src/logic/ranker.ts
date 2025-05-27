@@ -273,21 +273,43 @@ export const rankSchedules = (schedule: Schedule[], weights: Map<WeightCategory,
 	});
 };
 
+// extract the function that does mon -> WeekDay conversion
+export const mapDayToWeekDay = (day: string): WeekDay => {
+	const mapDay: Record<string, WeekDay> = {
+		mon: WeekDay.MONDAY,
+		tue: WeekDay.TUESDAY,
+		wed: WeekDay.WEDNESDAY,
+		thu: WeekDay.THURSDAY,
+		fri: WeekDay.FRIDAY,
+	};
+	if (!day || typeof day !== "string") {
+		throw new Error(`Invalid day: ${day}`);
+	}
+	return mapDay[day.toLowerCase()] || WeekDay.MONDAY; // Default to Monday if not found
+}
+
+export const mapDayWeekToDay = (weekDay: WeekDay): string => {
+	console.log("WeekDay:", weekDay);
+	const mapDay: Record<WeekDay, string> = {
+		[WeekDay.MONDAY]: "mon",
+		[WeekDay.TUESDAY]: "tue",
+		[WeekDay.WEDNESDAY]: "wed",
+		[WeekDay.THURSDAY]: "thu",
+		[WeekDay.FRIDAY]: "fri",
+	};
+	if (!mapDay[weekDay] ){
+		throw new Error(`Invalid WeekDay: ${weekDay}`);
+	}
+	return mapDay[weekDay] || "mon"; // Default to Monday if not found
+}
+
+
 export const parseSchedules = (courses: RawCourse[]): Course[] => {
 	const mapClasses = (strSplit: string[], offset: number = 0): LabSection => {
-		type Days = "mon" | "tue" | "wed" | "thu" | "fri";
-		const mapDay: Record<Days, WeekDay> = {
-			mon: WeekDay.MONDAY,
-			tue: WeekDay.TUESDAY,
-			wed: WeekDay.WEDNESDAY,
-			thu: WeekDay.THURSDAY,
-			fri: WeekDay.FRIDAY,
-		};
-
 		return {
 			sectionId: strSplit[0 + offset],
 			prof: strSplit[1 + offset],
-			days: strSplit[2 + offset].split("/").map((strDay) => mapDay[strDay.toLowerCase() as Days]),
+			days: strSplit[2 + offset].split("/").map((strDay) => mapDayToWeekDay(strDay)),
 			time: TimeRange.create(strSplit[3 + offset]),
 			isOnline: strSplit[4 + offset] === "ONLINE",
 		};

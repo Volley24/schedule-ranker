@@ -15,6 +15,10 @@ export class TimeRange {
 		return `${this.startTime.toString()} - ${this.endTime.toString()}`;
 	}
 
+	format24h() {
+		return `${this.startTime.format24h()} - ${this.endTime.format24h()}`;
+	}
+
 	durationFormatted() {
 		return this.startTime.durationFormatted(this.endTime);
 	}
@@ -39,6 +43,10 @@ export class Time {
 
 	toString() {
 		return this.format();
+	}
+
+	format24h() {
+		return `${Time.addExtraZeroIfNeeded(this.hours)}:${Time.addExtraZeroIfNeeded(this.minutes)}`;
 	}
 
 	static create(timeStr: string): Time {

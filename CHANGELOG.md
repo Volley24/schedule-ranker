@@ -4,8 +4,9 @@ Dates are in YYYY/MM/DD
 
 **Latest Version:** v.0.2.1
 
-## v.0.3.0 - 2024/X/Y
--	[ ] Add course creator where users can type the course details and add sections / lab sections.
+## v.0.3.0-alpha-1 - 2025/05/27
+-	Added a new interface which allows users to add courses, and their respective lecture / lab sections.
+    - TODO: Need to add a way for an imported schedule to be further edited by this UI.
 
 ## v.0.2.1 - 2024/7/3
 
