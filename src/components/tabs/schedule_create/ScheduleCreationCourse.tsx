@@ -1,10 +1,10 @@
 import { ExpandMore as ExpandMoreIcon, School as SchoolIcon } from "@mui/icons-material";
 import { Accordion, AccordionSummary, AccordionDetails, Button, Alert } from "@mui/material";
-import { useState } from "react";
-import { addCourseSection, UICourse, editCourseId, removeLastCourseSection } from "../logic/courses";
+import { addCourseSection, editCourseId, removeLastCourseSection, UICourse } from "../logic/courses";
 import { CourseCardAccordionHeader, Group, MyInput } from "./common";
 import { ScheduleCreationSection } from "./ScheduleCreationSection";
 import { useDispatch } from "react-redux";
+import { Course } from "../../../logic/definitions";
 
 export type ScheduleCreationCourseProps = {
     course: UICourse;
@@ -14,21 +14,6 @@ export type ScheduleCreationCourseProps = {
 export const ScheduleCreationCourse = (props: ScheduleCreationCourseProps) => {
     const { course, courseIndex } = props;
     const dispatch = useDispatch();
-
-    // add a section to the course
-    const addSection = () => {
-        dispatch(
-            addCourseSection({
-                courseIndex,
-            })
-        );
-    }
-
-    const removeLastSection = () => {
-        dispatch(
-            removeLastCourseSection()
-        );
-    }
 
     const doEditCourseId = (value: string) => {
         dispatch(editCourseId({ courseIndex, newCourseId: value }));
@@ -59,7 +44,7 @@ export const ScheduleCreationCourse = (props: ScheduleCreationCourseProps) => {
                     <Button
                         sx={{ margin: "auto", marginTop: "10px" }}
                         variant="outlined"
-                        onClick={addSection}
+                        onClick={() => dispatch(addCourseSection({ courseIndex }))}
                     >
                         Add Section
                     </Button>
@@ -67,7 +52,7 @@ export const ScheduleCreationCourse = (props: ScheduleCreationCourseProps) => {
                         sx={{ margin: "auto", marginTop: "10px" }}
                         variant="outlined"
                         color="error"
-                        onClick={removeLastSection}
+                        onClick={() => dispatch(removeLastCourseSection())}
                     >
                         Remove Last Section
                     </Button>

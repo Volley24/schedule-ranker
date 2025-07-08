@@ -2,7 +2,7 @@ import React from "react";
 import styled from "styled-components";
 import { ImportTab } from "./tabs/ImportTab";
 import { Paper, Tabs, Tab } from "@mui/material";
-import { RankedSchedule, Schedule } from "../logic/definitions";
+import { RankedSchedule, Schedule, ScheduledClass } from "../logic/definitions";
 import { ConfigTab } from "./tabs/ConfigTab";
 import { Weights } from "../App";
 import { AppNotice } from "./AppNotice";
@@ -30,7 +30,7 @@ export const TabBar = (props: {
 	value: number;
 	setValue: (num: number) => void;
 	selectedSchedule: RankedSchedule;
-	setSchedule: (courses: Schedule[]) => void;
+	setSchedule: (courses: ScheduledClass[][]) => void;
 	weights: Weights;
 	setWeights: (val: Weights) => void;
 	maxSchedules: number;

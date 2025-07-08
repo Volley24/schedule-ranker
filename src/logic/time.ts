@@ -31,7 +31,7 @@ export class TimeRange {
 		const times = input.replaceAll(" ", "").toLowerCase().split("-");
 
 		if (times.length !== 2) {
-			throw new Error("Time range must only exactly one dash. Example: 12:00PM - 1:00PM");
+			throw new Error(`'${input}' is invalid. Time range must only exactly one dash. Example: 12:00PM - 1:00PM`);
 		}
 
 		return new TimeRange(Time.create(times[0]), Time.create(times[1]));
@@ -69,6 +69,13 @@ export class Time {
 		} else {
 			return minutes === 0 ? `${hours}h` : `${hours}h${Time.addExtraZeroIfNeeded(minutes)}`;
 		}
+	}
+
+	add(minutes: number) {
+		const totalMinutes = this.hours * 60 + this.minutes + minutes;
+		const newHours = Math.floor((totalMinutes / 60) % 24);
+		const newMinutes = ((totalMinutes % 60) + 60) % 60;
+		return new Time(newHours < 0 ? newHours + 24 : newHours, newMinutes);
 	}
 
 	static now(offset: number = -5): Time {

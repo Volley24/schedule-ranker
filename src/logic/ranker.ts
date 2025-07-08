@@ -1,5 +1,6 @@
 import { WeightCategory } from "../App";
-import { Course, LabSection, RankedSchedule, RawCourse, Schedule, ScheduledClass, WeekDay } from "./definitions";
+import { UISchedule, UISection } from "../components/tabs/logic/courses";
+import { ClassSection, Course, CourseMetaData, RankedSchedule, RawCourse, Schedule, ScheduledClass, WeekDay } from "./definitions";
 import { TimeRange } from "./time";
 
 /**
@@ -7,7 +8,7 @@ import { TimeRange } from "./time";
  * @param schedule A list of classes which is sorted by start time and days, and which does not have any overlapping classes.
  * @returns A sorted schedule with the "best" schedules at the start, and the "worst" ones at the bottom.
  */
-export const rankSchedules = (schedule: Schedule[], weights: Map<WeightCategory, number>): RankedSchedule[] => {
+export const rankSchedules = (schedule: ScheduledClass[][], weights: Map<WeightCategory, number>): RankedSchedule[] => {
 	let dayRecord: Record<string, boolean> = {};
 
 	// Sliders to control the weights
@@ -17,7 +18,23 @@ export const rankSchedules = (schedule: Schedule[], weights: Map<WeightCategory,
 	// As most of these algorithms will use that in some way.
 	// The alternateFilterMethod, although slower, provides this data structure.
 
-	const getDayOffScore = (schedule: Schedule) => {
+
+
+	// TODO: Penalty for just ONE class
+	// Penalty varies on transportation time.
+	// i,e: -HALF if starts either at 8am or ends at 330pm
+	// - can falloff if starts slightly l8ter.
+
+	// full penalty if it like starts at 12pm or smth
+
+	// reduced penalty if 3pm onwards, since I have car and transporattion cut in half.
+	// although trafic idfk
+
+
+	// Also there should be better rewards for ending early. rn 5pm is treated as fine 
+	// (the algo was created when we had 10pm's, so 5pms looked like heaven. however 3pms should still be ranked higher then 5pm.)
+
+	const getDayOffScore = (schedule: ScheduledClass[]) => {
 		dayRecord = {};
 		for (const classA of schedule) {
 			// Online classes don't really count
@@ -28,13 +45,13 @@ export const rankSchedules = (schedule: Schedule[], weights: Map<WeightCategory,
 			if (Object.keys(dayRecord).length === 5) break;
 		}
 
-		return Object.keys(dayRecord).length === 5 ? 0 : 10;
+		return 10 - Object.keys(dayRecord).length * 2;
 	};
 
 	// Weights aren't enough...
 	// We need to configure what a good score is!
 	// What if only wants early classes!
-	const getEarlyClassTimeScore = (schedule: Schedule) => {
+	const getEarlyClassTimeScore = (schedule: ScheduledClass[]) => {
 		// 10 = No penalty (~11AM)
 
 		const timeMap: Record<number, number> = {
@@ -88,7 +105,7 @@ export const rankSchedules = (schedule: Schedule[], weights: Map<WeightCategory,
 		// late class score =
 	};
 
-	const getLateClassTimeScore = (schedule: Schedule) => {
+	const getLateClassTimeScore = (schedule: ScheduledClass[]) => {
 		// 10 = No penalty (~11AM)
 
 		const timeMap: Record<number, number> = {
@@ -145,9 +162,43 @@ export const rankSchedules = (schedule: Schedule[], weights: Map<WeightCategory,
 		// late class score =
 	};
 
+	// given a sorted schedule, 
+
+	const stamina = (schedule: ScheduledClass[]) => {
+		let stamina = 100; 
+		for (let i = 0; i < schedule.length; i++) {
+			const aClass = schedule[i];
+			const lastClass = schedule[i - 1];
+
+			if (lastClass === undefined) {
+				// First class
+				continue;
+			}
+
+			if (aClass.day !== lastClass.day) {
+				// Condition: NEW DAY
+				continue;
+			}
+
+			// Break of 15m or less? Stamina gets depleted.
+			const breakDuration = lastClass.time.endTime.durationMinutes(aClass.time.startTime);
+
+
+			// Need to figure out how stamina would work.
+			// We need to heavily penalize b2b.
+
+			// if (breakDuration < 15) {
+			// 	stamina -= 1;
+			// }else if () {
+				
+			// }
+
+		}
+	}
+
 	// After x amount of time, there should be y break.
 	//
-	const getBreakScore = (schedule: Schedule) => {
+	const getBreakScore = (schedule: ScheduledClass[]) => {
 		// Get a score, from 0 - 10, based on how good the breaks are.
 		// 10 being a particular day follows the adequete break times.
 
@@ -161,13 +212,19 @@ export const rankSchedules = (schedule: Schedule[], weights: Map<WeightCategory,
 			const lastClass = schedule[i - 1];
 
 			if (classRecord[aClass.day] === undefined) classRecord[aClass.day] = 0;
-			const duration = aClass.time.startTime.durationMinutes(aClass.time.endTime);
+
+			const trueDuration = aClass.time.startTime.durationMinutes(aClass.time.endTime);
+
+			const duration = aClass.isLab && trueDuration >= 120 ? Math.round(trueDuration / 3) : trueDuration;
 			classRecord[aClass.day] += duration;
 
 			if (lastClass === undefined) continue;
 			if (aClass.day !== lastClass.day) continue;
 
-			const breakTime = lastClass.time.endTime.durationMinutes(aClass.time.startTime);
+			//const trueBreakTime = lastClass.time.endTime.durationMinutes(aClass.time.startTime);
+
+
+			const breakTime = lastClass.time.endTime.add(-(trueDuration - duration)).durationMinutes(aClass.time.startTime);
 
 			// Validate that break time isn't too big
 			// Should be a seperate algorithm => "Break Health"
@@ -274,7 +331,7 @@ export const rankSchedules = (schedule: Schedule[], weights: Map<WeightCategory,
 };
 
 // extract the function that does mon -> WeekDay conversion
-export const mapDayToWeekDay = (day: string): WeekDay => {
+export const mapDayToWeekDay = (day: string): WeekDay | undefined => {
 	const mapDay: Record<string, WeekDay> = {
 		mon: WeekDay.MONDAY,
 		tue: WeekDay.TUESDAY,
@@ -282,13 +339,13 @@ export const mapDayToWeekDay = (day: string): WeekDay => {
 		thu: WeekDay.THURSDAY,
 		fri: WeekDay.FRIDAY,
 	};
-	if (!day || typeof day !== "string") {
-		throw new Error(`Invalid day: ${day}`);
-	}
-	return mapDay[day.toLowerCase()] || WeekDay.MONDAY; // Default to Monday if not found
+	// if (!day || typeof day !== "string") {
+	// 	throw new Error(`Invalid day: ${day}`);
+	// }
+	return mapDay[day.toLowerCase()]; // Default to Monday if not found
 }
 
-export const mapDayWeekToDay = (weekDay: WeekDay): string => {
+export const mapDayWeekToDay = (weekDay: WeekDay, cap = false): string => {
 	console.log("WeekDay:", weekDay);
 	const mapDay: Record<WeekDay, string> = {
 		[WeekDay.MONDAY]: "mon",
@@ -297,43 +354,105 @@ export const mapDayWeekToDay = (weekDay: WeekDay): string => {
 		[WeekDay.THURSDAY]: "thu",
 		[WeekDay.FRIDAY]: "fri",
 	};
-	if (!mapDay[weekDay] ){
-		throw new Error(`Invalid WeekDay: ${weekDay}`);
-	}
-	return mapDay[weekDay] || "mon"; // Default to Monday if not found
+	// if (!mapDay[weekDay] ){
+	// 	throw new Error(`Invalid WeekDay: ${weekDay}`);
+	// }
+	const day = mapDay[weekDay] || "mon";
+	return cap ? (day[0].toUpperCase() + day.slice(1).toLowerCase()) : day;
+}
+
+export type RawSchedule = {
+	tag: string;
+	classes: RawCourse[];
 }
 
 
-export const parseSchedules = (courses: RawCourse[]): Course[] => {
-	const mapClasses = (strSplit: string[], offset: number = 0): LabSection => {
+export const parseSchedules = (schedule: RawSchedule): UISchedule => {
+	const mapClasses = (strSplit: string[], isLab: boolean): UISection => {
+		const offset = isLab ? 1 : 0;
 		return {
 			sectionId: strSplit[0 + offset],
 			prof: strSplit[1 + offset],
-			days: strSplit[2 + offset].split("/").map((strDay) => mapDayToWeekDay(strDay)),
-			time: TimeRange.create(strSplit[3 + offset]),
+			days: strSplit[2 + offset].split("/").map((strDay) => mapDayToWeekDay(strDay)).filter((day): day is WeekDay => day !== undefined),
+			time: strSplit[3 + offset],
 			isOnline: strSplit[4 + offset] === "ONLINE",
+			isLab
 		};
 	};
 
-	return courses.map((course) => ({
-		...course,
-		sections: course.sections.map((str) => {
-			return mapClasses(str.split(","));
-		}),
-		labSections: course.labSections.map((str) => {
-			const strSplit = str.split(",");
-			const labSection = mapClasses(strSplit, 1);
-			labSection.classSectionIds = strSplit[0].split("/");
-			return labSection;
-		}),
-	}));
+	return {
+		name: schedule.tag,
+		courses: schedule.classes.map((course) => ({
+			...course,
+			sections: [
+				...course.sections.map((str) => {
+					return mapClasses(str.split(","), false);
+				}), 
+				...course.labSections.map((str) => {
+					const strSplit = str.split(",");
+					const labSection = mapClasses(strSplit, true);
+					labSection.classSectionIds = strSplit[0].split("/");
+					return labSection;
+				}
+			)],
+		})),
+		newSchedule: true,
+		undoStack: []
+	};
 };
+
+export const parseUISchedules = (schedule: RawSchedule): UISchedule => {
+	const mapClasses = (strSplit: string[], isLab: boolean): UISection => {
+		const offset = isLab ? 1 : 0;
+		return {
+			sectionId: strSplit[0 + offset],
+			prof: strSplit[1 + offset],
+			days: strSplit[2 + offset].split("/").map((strDay) => mapDayToWeekDay(strDay)).filter((day): day is WeekDay => day !== undefined),
+			time: strSplit[3 + offset],
+			isOnline: strSplit[4 + offset] === "ONLINE",
+			isLab
+		};
+	};
+
+	return {
+		name: schedule.tag,
+		courses: schedule.classes.map((course) => ({
+			...course,
+			sections: [
+				...course.sections.map((str) => {
+					return mapClasses(str.split(","), false);
+				}), 
+				...course.labSections.map((str) => {
+					const strSplit = str.split(",");
+					const labSection = mapClasses(strSplit, true);
+					labSection.classSectionIds = strSplit[0].split("/");
+					return labSection;
+				}
+			)],
+		})),
+		newSchedule: false,
+		undoStack: [],
+	};
+};
+
+export type TransformedCourse =  CourseMetaData & {
+	sections: ClassSection[];
+	labSections: ClassSection[];
+}
 
 // export const MAIN_SCHEDULE = parseSchedules(schedule.classes);
 
 export const getNumOfCombinations = (courses: Course[]) => {
+
+	const transformedCourses: TransformedCourse[] = courses.map((course) => ({
+		...course,
+		sections: course.sections.filter((section) => !section.isLab),
+		labSections: course.sections.filter((section) => section.isLab),
+	}));
+
+
 	let combinations = 0;
-	courses.forEach((course) => {
+	transformedCourses.forEach((course) => {
 		let combinationsHere = 0;
 
 		if (course.labSections.length === 0) {
@@ -354,7 +473,7 @@ export const getNumOfCombinations = (courses: Course[]) => {
 	return combinations;
 };
 
-export const filterInvalidSchedules = (schedules: Schedule[]) => {
+export const filterInvalidSchedules = (schedules: ScheduledClass[][]) => {
 	const filtered = schedules
 		.map((schedule) =>
 			schedule.sort((a, b) => {
@@ -380,14 +499,22 @@ export const filterInvalidSchedules = (schedules: Schedule[]) => {
 	return filtered;
 };
 
-export const generateSchedules = (courses: Course[]): Schedule[] => {
-	console.log("Generating schedules...");
-	const schedules: Schedule[] = [];
 
-	const recurse = (schedule: Schedule = [], index: number) => {
-		const myClass = courses[index];
+
+export const generateSchedules = (courses: Course[]): ScheduledClass[][] => {
+	console.log("Generating schedules...");
+	const schedules: ScheduledClass[][] = [];
+
+	const transformedCourses: TransformedCourse[] = courses.map((course) => ({
+		...course,
+		sections: course.sections.filter((section) => !section.isLab),
+		labSections: course.sections.filter((section) => section.isLab),
+	}));
+
+	const recurse = (schedule: ScheduledClass[] = [], index: number) => {
+		const myClass = transformedCourses[index];
 		myClass.sections.forEach((potentialClass) => {
-			const newSchedule: Schedule = [...schedule];
+			const newSchedule: ScheduledClass[] = [...schedule];
 
 			newSchedule.push(
 				...potentialClass.days.map((day) => ({
@@ -413,7 +540,7 @@ export const generateSchedules = (courses: Course[]): Schedule[] => {
 				if (classSectionsIds && !classSectionsIds.includes(potentialClass.sectionId)) {
 					return;
 				}
-				const newerSchedule: Schedule = [...newSchedule];
+				const newerSchedule: ScheduledClass[] = [...newSchedule];
 
 				newerSchedule.push(
 					...potentialLab.days.map((day) => ({

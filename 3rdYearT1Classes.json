@@ -1,0 +1,83 @@
+{
+	"tag": "Comp Sys 3rd Year 1st Sem",
+	"classes": [
+		{
+			"id": "SYSC 3020",
+			"name": "Intro to Software Engineering",
+			"sections": [
+				"A,Nafiseh Kahani,Tue/Thu,10:05 - 11:25"
+			],
+			"labSections": [
+				"A,L1E,Nafiseh Kahani,Thu,11:35 - 14:25",
+				"A,L2E,Nafiseh Kahani,Wed,14:35 - 17:25",
+				"A,L3E,Nafiseh Kahani,Wed,08:35 - 11:25"
+			]
+		},
+		{
+			"id": "SYSC 3310",
+			"name": "Object-Oriented Software Development",
+			"sections": [
+                "A,Shikharesh Majumdar,Tue/Thu,13:05 - 14:25",
+                "B,Shikharesh Majumdar,Mon/Wed,08:35 - 09:55"
+
+            ],
+			"labSections": [
+				"A,A1,Shikharesh Majumdar,Wed,14:35 - 16:25",
+                "A,A2,Shikharesh Majumdar,Mon,14:35 - 16:25",
+                "A,A3,Shikharesh Majumdar,Wed,16:35 - 18:25",
+
+                "B,B1,Shikharesh Majumdar,Mon,16:35 - 18:25",
+                "B,B2,Shikharesh Majumdar,Mon,12:35 - 14:25",
+                "B,B3,Shikharesh Majumdar,Tue,12:35 - 14:25"
+			]
+		},
+		{
+			"id": "SYSC 3600",
+			"name": "Systems and Simulation",
+			"sections": [
+                "A,Abdullah Kadri,Tue/Thu,16:05 - 17:25", 
+                "C,Chao Shen,Tue/Thu,13:05 - 14:25"
+            ],
+			"labSections": [
+				"A/C,L1,Chao Shen,Mon,14:35 - 17:25",
+                "A/C,L2,Chao Shen,Wed,11:35 - 14:25",
+                "A/C,L3,Chao Shen,Wed,14:35 - 17:25",
+                "A/C,L4,Chao Shen,Wed,08:35 - 11:25",
+
+                "A/C,L5,Abdullah Kadri,Fri,14:35 - 17:25",
+                "A/C,L6,Abdullah Kadri,Fri,08:35 - 11:25",
+                "A/C,L7,Abdullah Kadri,Fri,11:35 - 14:25"
+			]
+		},
+		{
+			"id": "SYSC 4001",
+			"name": "Operating Systems",
+			"sections": [
+                "A,Gabriel Wainer,Tue/Thu,14:35 - 15:55"
+            ],
+			"labSections": [
+				"A,L1,Gabriel Wainer,Mon,14:35 - 17:25",
+                "A,L2,Gabriel Wainer,Mon,11:35 - 14:25",
+                "A,L3,Gabriel Wainer,Fri,08:35 - 11:25",
+                "A,L4,Gabriel Wainer,Wed,14:35 - 17:25"
+			]
+		},
+		{
+			"id": "ECOR 2050",
+			"name": "Design/Analysis of Experiments",
+			"sections": [
+                "A,Thomas Walker,Mon/Wed,13:05 - 14:25",
+                "B,Thomas Walker,Tue/Thu,11:35 - 12:55"
+            ],
+			"labSections": [
+				"A/B,L01,Thomas Walker,Tue,14:35 - 17:25",
+                "A/B,L02,Thomas Walker,Fri,14:35 - 17:25",
+                "A/B,L03,Thomas Walker,Tue,08:35 - 11:25",
+                "A/B,L04,Thomas Walker,Wed,14:35 - 17:25",
+                "A/B,L05,Thomas Walker,Thu,08:35 - 11:25",
+                "A/B,L06,Thomas Walker,Fri,11:35 - 14:25",
+                "A/B,L07,Thomas Walker,Thu,14:35 - 17:25" 
+			]
+		}
+	]
+}

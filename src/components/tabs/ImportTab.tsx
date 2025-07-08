@@ -1,7 +1,7 @@
 import React from "react";
 import styled from "styled-components";
-import { parseSchedules, generateSchedules, filterInvalidSchedules, mapDayToWeekDay, mapDayWeekToDay } from "../../logic/ranker";
-import { ClassSection, Course, LabSection, Schedule } from "../../logic/definitions";
+import { parseSchedules, generateSchedules, filterInvalidSchedules, mapDayWeekToDay } from "../../logic/ranker";
+import { Course, ScheduledClass } from "../../logic/definitions";
 import {
 	FormControl,
 	InputLabel,
@@ -11,10 +11,10 @@ import {
 	Divider,
 	Typography,
 } from "@mui/material";
-import { scheduleStorage } from "./scheduleLocalStorage";
+import { scheduleStorage } from "./logic/scheduleLocalStorage";
 import { CreateScheduleDialog } from "./schedule_create/CreateScheduleDialog";
-import { UICourse, UISection } from "./logic/courses";
-import { Time, TimeRange } from "../../logic/time";
+import { UICourse } from "./logic/courses";
+import { TimeRange } from "../../logic/time";
 
 const CenteredDiv = styled.div`
 	display: flex;
@@ -45,7 +45,7 @@ const ImportButtonContainer = styled.div`
 	box-sizing: border-box;
 `;
 
-export const ImportTab = (props: { setSchedule: (schedule: Schedule[]) => void }) => {
+export const ImportTab = (props: { setSchedule: (schedule: ScheduledClass[][]) => void }) => {
 	const { setSchedule } = props;
 	const [messageState, setMessageState] = React.useState("");
 	const [selectedSchedule, setSelectedSchedule] = React.useState("None");
@@ -53,43 +53,8 @@ export const ImportTab = (props: { setSchedule: (schedule: Schedule[]) => void }
 
 	const [isCreatingClasses, setCreatingClasses] = React.useState(false);
 
-	const onCloseAndSave = (scheduleName: string, courses: UICourse[]) => {
-		//const a: Course = {};
-
-		const mapUISectionToClassSection = (section: UISection): ClassSection => ({
-			days: section.days.trim().split(",").map((day) => mapDayToWeekDay(day.trim())),
-			time: new TimeRange(Time.create(section.startTime), Time.create(section.endTime)),
-			sectionId: section.section,
-			prof: section.profName,
-			isOnline: section.isOnline,
-		});
-
-		// Convert UICourse to Course
-		const convertedCourses: Course[] = courses.map((course) => ({
-			id: course.id,
-			name: course.id,
-			sections: course.sections
-				.filter((section) => !section.isLab)
-				.map((section): ClassSection => {
-					
-					console.log("Days:", section.days);
-					console.log("Days split:", section.days.split(","));
-					console.log("Days mapped:", section.days.trim().split(",").map((day) => mapDayToWeekDay(day.trim())));
-
-					
-					return ({
-						...mapUISectionToClassSection(section),
-					})}),
-			labSections: course.sections
-				.filter((section) => section.isLab)
-				.map((section): LabSection => ({
-					...mapUISectionToClassSection(section),
-					classSectionIds: section.validSections.split(",").map((id) => id.trim()),
-				})),
-		}));
-
-
-		const schedules = generateSchedules(convertedCourses);
+	const onCloseAndSave = (scheduleName: string, courses: Course[]) => {
+		const schedules = generateSchedules(courses);
 		const validSchedules = filterInvalidSchedules(schedules);
 
 		setSchedule(validSchedules);
@@ -122,16 +87,17 @@ export const ImportTab = (props: { setSchedule: (schedule: Schedule[]) => void }
 		// "A,Shaghayegh Gomar,Mon/Wed,08:35 - 09:55"
 		const scheduleJSON = JSON.stringify(
 			{
-				classes: convertedCourses.map((course) => ({
+				tag: scheduleName,
+				classes: courses.map((course) => ({
 					id: course.id,
 					name: course.name,
-					sections: course.sections.map((section) => {
+					sections: course.sections.filter(section => !section.isLab).map((section) => {
 						console.log("Section days:", section.days);
 						console.log("Section days mapped:", section.days.map((dayOfWeek) => mapDayWeekToDay(dayOfWeek)));
-						return `${section.sectionId},${section.prof},${section.days.map((dayOfWeek) => mapDayWeekToDay(dayOfWeek)).join("/")},${section.time.format24h()}`;
+						return `${section.sectionId},${section.prof},${section.days.map((dayOfWeek) => mapDayWeekToDay(dayOfWeek)).join("/")},${section.time.format24h()}${section.isOnline ? ",ONLINE" : ""}`;
 					}),
-					labSections: course.labSections.map((section) => {
-						return `${section.classSectionIds},${section.sectionId},${section.prof},${section.days.map((dayOfWeek) => mapDayWeekToDay(dayOfWeek)).join("/")},${section.time.format24h()}`;
+					labSections: course.sections.filter(section => section.isLab).map((section) => {
+						return `${section.classSectionIds?.join("/")},${section.sectionId},${section.prof},${section.days.map((dayOfWeek) => mapDayWeekToDay(dayOfWeek)).join("/")},${section.time.format24h()}${section.isOnline ? ",ONLINE" : ""}`;
 					}),
 				})),
 			}
@@ -144,6 +110,19 @@ export const ImportTab = (props: { setSchedule: (schedule: Schedule[]) => void }
 		}
 	};
 
+	const handleScheduleImport = async (files: React.ChangeEvent<HTMLInputElement>) => {
+		console.log("on change");
+		setMessageState("Importing...");
+		const file = files.target.files?.[0];
+		if (file) {
+			const contents = await file.text();
+
+			importSchedule(file.name, contents, true);
+			// update json! (if valid).
+		}
+	}
+
+
 	const importSchedule = (key: string, contents: string, save: boolean) => {
 		// TODO: for later.
 		// if (save && scheduleStorage.scheduleExists(key)) {
@@ -154,29 +133,41 @@ export const ImportTab = (props: { setSchedule: (schedule: Schedule[]) => void }
 
 		try {
 			const parsedJSON = JSON.parse(contents);
-			const courses = parseSchedules(parsedJSON.classes);
-			const schedules = generateSchedules(courses);
+			const schedule = parseSchedules(parsedJSON);
+
+			console.log(`Parse schedules:`, schedule);
+
+			const transformedCourses: Course[] = schedule.courses.map((course) => ({
+				...course,
+				sections: course.sections.map((section) => ({
+					...section,
+					time: TimeRange.create(section.time),
+				})),
+			}));
+
+					
+			const schedules = generateSchedules(transformedCourses);
 			const validSchedules = filterInvalidSchedules(schedules);
 
 			setSchedule(validSchedules);
 
 			// TODO: Show popup if already exists?
 			// a) Override b) Store seperatally
-			if (save) scheduleStorage.putSchedule(key, contents);
+			if (save) scheduleStorage.putSchedule(schedule.name, contents);
 
 			setMessageState(
 				[
-					`Succesfully imported ${key}!`,
+					`Succesfully imported ${schedule.name}!`,
 					`File Length: ${contents.length} chars`,
 					"",
 					`Total combinations: ${schedules.length}`,
 					`Valid combinations: ${validSchedules.length}`,
 					"",
 					"Classes imported:",
-					courses
+					schedule.courses
 						.map(
 							(course) =>
-								`${course.id} - Sections: ${course.sections.length} | Lab Sections: ${course.labSections.length}`
+								`${course.id} - Sections: ${course.sections.length}`
 						)
 						.join("\n"),
 				].join("\n")
@@ -192,32 +183,13 @@ export const ImportTab = (props: { setSchedule: (schedule: Schedule[]) => void }
 			<CreateScheduleDialog open={isCreatingClasses} close={() => setCreatingClasses(false)} onCreateAndSave={onCloseAndSave}/>
 			<ImportButtonContainer>
 				<Typography align="left" sx={{ marginBottom: "10px" }}>
-					1. Import JSON locally
+					1. Add / Edit a Schedule
 				</Typography>
-				<Button variant="contained" component="label">
-					Import JSON
-					<input
-						type="file"
-						hidden
-						accept=".json"
-						onChange={async (files) => {
-							console.log("on change");
-							setMessageState("Importing...");
-							const file = files.target.files?.[0];
-							if (file) {
-								const contents = await file.text();
-
-								importSchedule(file.name, contents, true);
-								// update json! (if valid).
-							}
-						}}
-					/>
-				</Button>
-				<Button variant="contained" component="label" onClick={() => setCreatingClasses(true)}>
-					Add Classes
+				<Button variant="contained" component="label"  onClick={() => setCreatingClasses(true)}>
+					Schedule Editor
 				</Button>
 			</ImportButtonContainer>
-
+		
 			<Divider color="#000000" sx={{ width: "100%" }} />
 
 			<StyledSavedSchedulesContainer>
@@ -269,6 +241,23 @@ export const ImportTab = (props: { setSchedule: (schedule: Schedule[]) => void }
 			</StyledSavedSchedulesContainer>
 
 			<Divider color="#000000" sx={{ width: "100%" }} />
+
+			<ImportButtonContainer>
+				<Typography align="left" sx={{ marginBottom: "10px" }}>
+					3. Import JSON locally
+				</Typography>
+				<Button variant="contained" component="label">
+					Import JSON
+					<input
+						type="file"
+						hidden
+						accept=".json"
+						onChange={handleScheduleImport}
+					/>
+				</Button>
+			</ImportButtonContainer>
+
+			<Divider color="#000000" sx={{ width: "100%", marginBottom: "10px" }} />
 
 			{messageState}
 		</CenteredDiv>

@@ -1,10 +1,10 @@
 import React from "react";
 import styled from "styled-components";
 import { TabBar } from "./components/TabBar";
-import { filterInvalidSchedules, generateSchedules, parseSchedules, rankSchedules } from "./logic/ranker";
+import { filterInvalidSchedules, generateSchedules, parseSchedules, rankSchedules, RawSchedule } from "./logic/ranker";
 import { ScheduleView } from "./components/ScheduleView";
 import schedule from "./logic/schedule.json";
-import { Schedule } from "./logic/definitions";
+import { Schedule, ScheduledClass } from "./logic/definitions";
 
 const MainContainer = styled.div`
 	display: flex;
@@ -38,19 +38,16 @@ const initializeWeights = () => {
 };
 
 export const App = () => {
-	const [classes, setClasses] = React.useState<Schedule[]>([]);
+	const [classes, setClasses] = React.useState<ScheduledClass[][]>([]);
 	const [weights, setWeights] = React.useState<Weights>(initializeWeights);
 
-	React.useEffect(() => {
-		setClasses(filterInvalidSchedules(generateSchedules(parseSchedules(schedule.classes))));
-	}, []);
+	// React.useEffect(() => {
+	// 	setClasses(filterInvalidSchedules(generateSchedules(parseSchedules(schedule).courses)));
+	// }, []);
 	const [scheduleIndex, setScheduleIndex] = React.useState<number>(1);
 
 	const rankedSchedules = React.useMemo(() => rankSchedules(classes, weights), [classes, weights]);
 
-	// Maybe we should be defining the tabs of tab bar...
-	// Else, we need prop drill EVERYTHING!!!
-	// Or use redux lmao
 	return (
 		<MainContainer>
 			<StyledScreenResults>

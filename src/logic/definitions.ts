@@ -17,15 +17,42 @@ export const WeekDayName = {
 	[WeekDay.FRIDAY]: "Friday",
 };
 
-export type Schedule = ScheduledClass[];
-
-export type RankedSchedule = {
-	classes: ScheduledClass[];
-
-	totalScore: number;
-	scores: Map<WeightCategory, number>;
+export type Schedule = {
+	name: string;
+	courses: Course[];
 };
 
+// Basic couse metadata
+export type CourseMetaData = {
+	id: string;
+	name?: string;
+};
+
+export type CourseDetails = {
+	sectionId: string;
+	prof: string;
+	time: TimeRange; // Can be undefined if the course is online or has no specific time
+};
+
+// Class and sections as per schedule
+export type RawCourse = CourseMetaData & {
+	sections: string[];
+	labSections: string[];
+};
+
+export type Course = CourseMetaData & {
+	sections: ClassSection[];
+};
+
+
+export type ClassSection = CourseDetails & {
+	isLab: boolean;
+	isOnline: boolean;
+	days: WeekDay[];
+	classSectionIds?: string[];
+};
+
+// A spesific class which occurs on a specific day
 export type ScheduledClass = CourseMetaData &
 	CourseDetails & {
 		day: WeekDay;
@@ -33,29 +60,10 @@ export type ScheduledClass = CourseMetaData &
 		isOnline: boolean;
 	};
 
-export type CourseMetaData = {
-	id: string;
-	name: string;
-};
+// A ranked schedule is a schedule with scores for different weight categories
+export type RankedSchedule = {
+	classes: ScheduledClass[];
 
-export type CourseDetails = {
-	sectionId: string;
-	prof: string;
-	time: TimeRange;
-};
-
-export type Course = CourseMetaData & {
-	sections: ClassSection[];
-	labSections: LabSection[];
-};
-
-export type RawCourse = CourseMetaData & {
-	sections: string[];
-	labSections: string[];
-};
-
-export type LabSection = ClassSection & { classSectionIds?: string[] };
-export type ClassSection = CourseDetails & {
-	isOnline: boolean;
-	days: WeekDay[];
+	totalScore: number;
+	scores: Map<WeightCategory, number>;
 };

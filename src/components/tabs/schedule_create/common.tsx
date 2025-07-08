@@ -57,6 +57,13 @@ export const Group = styled.div`
 	gap: 7px;
 `;
 
+export const VerticalGroup = styled.div`
+	display: flex;
+	flex-direction: column;
+	gap: 7px;
+`;
+
+
 export const Centered = styled.div`
 	width: 100%;
 	display: flex;

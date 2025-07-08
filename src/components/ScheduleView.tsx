@@ -28,7 +28,7 @@ export const ScheduleView = (props: { selectedSchedule: RankedSchedule | undefin
 			}
 			acc[val.day].push(val);
 			return acc;
-		}, {} as Record<WeekDay, Schedule>);
+		}, {} as Record<WeekDay, ScheduledClass[]>);
 	}, [selectedSchedule]);
 
 	return (
@@ -103,7 +103,7 @@ export const TimeIndication = ({ numTicks }: { numTicks: number }) => {
 	);
 };
 
-export const Week = (props: { schedule: Schedule | undefined; day: WeekDay; numTicks: number }) => {
+export const Week = (props: { schedule: ScheduledClass[] | undefined; day: WeekDay; numTicks: number }) => {
 	const { schedule, day, numTicks } = props;
 
 	const bars = Array.from({ length: numTicks }, (_, i) => i);
