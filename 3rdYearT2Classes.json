@@ -1,0 +1,65 @@
+{
+    "tag": "3rd year WINTER (NEW)",
+    "classes": [
+        {
+            "id": "SYSC 3010",
+            "sections": [
+                "A,Abdullah Kadri,mon,14:35 - 16:25"
+            ],
+            "labSections": [
+                "A,A1,Abdullah Kadri,thu,16:35 - 18:25",
+                "A,L2,Abdullah Kadri,thu,08:35 - 11:25",
+                "A,L3,Abdullah Kadri,tue,11:35 - 14:25"
+            ]
+        },
+        {
+            "id": "SYSC 3303",
+            "sections": [
+                "A,Unknown,wed/fri,11:35 - 12:55"
+            ],
+            "labSections": [
+                "A,A1,Unknown,thu,16:35 - 18:25",
+                "A,A2,Unknown,thu,16:05 - 17:55",
+                "A,A3,Unknown,mon,12:35 - 14:25",
+                "A,A4,Unknown,tue,14:35 - 16:25"
+            ]
+        },
+        {
+            "id": "SYSC 3320",
+            "sections": [
+                "A,Shaghayegh Gomar,mon/wed,10:05 - 11:25"
+            ],
+            "labSections": [
+                "A,L1E,Shaghayegh Gomar,fri,11:35 - 14:25",
+                "A,L2E,Shaghayegh Gomar,tue,08:35 - 11:25"
+            ]
+        },
+        {
+            "id": "SYSC 3501",
+            "sections": [
+                "A,Ioannis Lambadaris,mon/wed,11:35 - 12:55"
+            ],
+            "labSections": [
+                "A,L1O,Ioannis Lambadaris,tue,08:35 - 11:25",
+                "A,L2O,Ioannis Lambadaris,thu,11:35 - 14:25",
+                "A,L3O,Ioannis Lambadaris,thu,08:35 - 11:25",
+                "A,L4O,Ioannis Lambadaris,mon,08:35 - 11:25",
+                "A,L5O,Ioannis Lambadaris,fri,11:35 - 14:25"
+            ]
+        },
+        {
+            "id": "ELEC 2507",
+            "sections": [
+                "A,MD Masum Hossain,tue/thu,17:35 - 18:55",
+                "B,Hubert Jean-Ruel,wed/fri,14:35 - 15:55"
+            ],
+            "labSections": [
+                "A/B,L1,MD Masum Hossain,tue,08:35 - 11:25",
+                "A/B,L2,MD Masum Hossain,fri,08:35 - 11:25",
+                "A/B,L3,MD Masum Hossain,fri,11:35 - 14:25",
+                "A/B,L4,MD Masum Hossain,thu,08:35 - 11:25",
+                "A/B,L5,MD Masum Hossain,mon,14:35 - 17:25"
+            ]
+        }
+    ]
+}

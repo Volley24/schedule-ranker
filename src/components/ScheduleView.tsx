@@ -115,9 +115,9 @@ export const Week = (props: { schedule: ScheduledClass[] | undefined; day: WeekD
 					<StyledBar key={(100 * i) / numTicks} $halfTick={i % 2 !== 0} $position={(100 * i) / numTicks} />
 				))}
 				{schedule &&
-					schedule.map((aClass) => {
+					schedule.map((aClass, idx) => {
 						return (
-							<ClassView key={`${aClass.id}-${aClass.sectionId}`} aClass={aClass} numTicks={numTicks} />
+							<ClassView index={idx} key={`${aClass.id}-${aClass.sectionId}`} aClass={aClass} numTicks={numTicks} />
 						);
 					})}
 			</StyledClassesArea>
@@ -125,7 +125,7 @@ export const Week = (props: { schedule: ScheduledClass[] | undefined; day: WeekD
 	);
 };
 
-const StyledClassView = styled.div<{ $position: number; $height: number }>`
+const StyledClassView = styled.div<{ $position: number; $height: number; $paddHoriz: number }>`
 	position: absolute;
 	top: ${(props) => props.$position}%;
 	height: ${(props) => props.$height}%;
@@ -136,19 +136,31 @@ const StyledClassView = styled.div<{ $position: number; $height: number }>`
 	z-index: 4;
 
 	width: 100%;
-	padding: 0 1px;
+	padding-left: ${props => props.$paddHoriz + "px"};
 	box-sizing: border-box;
 `;
 
-const PaperView = styled(Paper)`
+const availableCourseColors = [
+    "#b3d2f0", // Blue
+    "#b3f0d2", // Green
+    "#f0e6b3", // Yellow
+    "#f0b3b3", // Red
+    "#d6b3f0",  // Purple
+    "#f0b3e6", // Pink
+    "#f0cbb3", // Peach
+    "#c7f0b3", // Light Lime
+    "#b3c6f0"  // Periwinkle
+];
+
+const PaperView = styled(Paper)<{$color: string}>`
 	&&& {
-		background: #b3d2f0;
+		background: ${props => props.$color};
 	}
 	height: 100%;
 `;
 
-export const ClassView = (props: { aClass: ScheduledClass; numTicks: number }) => {
-	const { aClass, numTicks } = props;
+export const ClassView = (props: { aClass: ScheduledClass; numTicks: number; index: number }) => {
+	const { aClass, numTicks, index } = props;
 
 	const mul = (100 * 2) / numTicks;
 	const hoursOffset = 8;
@@ -157,8 +169,8 @@ export const ClassView = (props: { aClass: ScheduledClass; numTicks: number }) =
 	const endPos = aClass.time.endTime.hours * mul + aClass.time.endTime.minutes * (mul / 60) - hoursOffset * mul;
 
 	return (
-		<StyledClassView $height={endPos - startPos} $position={startPos}>
-			<PaperView elevation={1}>
+		<StyledClassView $height={endPos - startPos} $position={startPos} $paddHoriz={1}>
+			<PaperView elevation={1} $color={availableCourseColors[index % availableCourseColors.length]}>
 				<strong>
 					{aClass.id} {aClass.sectionId}
 				</strong>

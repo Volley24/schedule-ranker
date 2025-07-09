@@ -483,6 +483,7 @@ export const filterInvalidSchedules = (schedules: ScheduledClass[][]) => {
 			})
 		)
 		.filter((schedule) => {
+			// return true;
 			for (let i = 1; i < schedule.length; i++) {
 				const currentClass = schedule[i];
 				const lastClass = schedule[i - 1];
