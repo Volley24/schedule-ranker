@@ -1,5 +1,5 @@
-import { TextField } from "@mui/material";
-import { RankedSchedule } from "../../logic/definitions";
+import { Checkbox, FormControlLabel, TextField, Typography, Divider } from "@mui/material";
+import { Course, RankedSchedule } from "../../logic/definitions";
 import { WeightCategory, Weights } from "../../App";
 import styled from "styled-components";
 
@@ -11,6 +11,10 @@ export type ConfigTabProps = {
 	maxSchedules: number;
 	weights: Weights;
 	setWeights: (val: Weights) => void;
+
+	courses: Course[];
+	includedCourseIds: Set<string>;
+	onToggleCourseInclusion: (courseId: string, included: boolean) => void;
 };
 
 const StyledTable = styled.table`
@@ -37,8 +41,14 @@ const StyledInput = styled(TextField)`
 	}
 `;
 
+const CourseListContainer = styled.div`
+	padding: 10px;
+	display: flex;
+	flex-direction: column;
+`;
+
 export const ConfigTab = (props: ConfigTabProps) => {
-	const { scheduleIndex, setScheduleIndex, selectedSchedule, weights, setWeights, maxSchedules } = props;
+	const { scheduleIndex, setScheduleIndex, selectedSchedule, weights, setWeights, maxSchedules, courses, includedCourseIds, onToggleCourseInclusion } = props;
 
 	const getWeightInput = (key: WeightCategory) => {
 		return (
@@ -62,6 +72,26 @@ export const ConfigTab = (props: ConfigTabProps) => {
 
 	return (
 		<div>
+			{courses.length > 0 && (
+				<CourseListContainer>
+					<Typography variant="subtitle2">Included Classes</Typography>
+					{courses.map((course) => (
+						<FormControlLabel
+							key={course.id}
+							control={
+								<Checkbox
+									size="small"
+									checked={includedCourseIds.has(course.id)}
+									onChange={(_, checked) => onToggleCourseInclusion(course.id, checked)}
+								/>
+							}
+							label={course.name ? `${course.id} - ${course.name}` : course.id}
+						/>
+					))}
+					<Divider sx={{ marginTop: "5px" }} />
+				</CourseListContainer>
+			)}
+
 			<PaddedContainer>
 				<span>Schedule Rank:</span>
 				<StyledInput

@@ -2,7 +2,7 @@ import React from "react";
 import styled from "styled-components";
 import { ImportTab } from "./tabs/ImportTab";
 import { Paper, Tabs, Tab } from "@mui/material";
-import { RankedSchedule, Schedule, ScheduledClass } from "../logic/definitions";
+import { Course, RankedSchedule, ScheduledClass } from "../logic/definitions";
 import { ConfigTab } from "./tabs/ConfigTab";
 import { Weights } from "../App";
 import { AppNotice } from "./AppNotice";
@@ -30,17 +30,20 @@ export const TabBar = (props: {
 	value: number;
 	setValue: (num: number) => void;
 	selectedSchedule: RankedSchedule;
-	setSchedule: (courses: ScheduledClass[][]) => void;
+	activateSchedule: (courses: Course[], validSchedules: ScheduledClass[][]) => void;
 	weights: Weights;
 	setWeights: (val: Weights) => void;
 	maxSchedules: number;
+	courses: Course[];
+	includedCourseIds: Set<string>;
+	onToggleCourseInclusion: (courseId: string, included: boolean) => void;
 }) => {
-	const { value, setValue, selectedSchedule, setSchedule, weights, setWeights, maxSchedules } = props;
+	const { value, setValue, selectedSchedule, activateSchedule, weights, setWeights, maxSchedules, courses, includedCourseIds, onToggleCourseInclusion } = props;
 	const [selectedTab, setSelectedTab] = React.useState<TabName>(TabName.IMPORT);
 
 	const renderSelectedTab = () => {
 		if (selectedTab === TabName.IMPORT) {
-			return <ImportTab setSchedule={setSchedule} />;
+			return <ImportTab activateSchedule={activateSchedule} />;
 		} else if (selectedTab === TabName.CONFIG) {
 			return (
 				<ConfigTab
@@ -50,6 +53,9 @@ export const TabBar = (props: {
 					weights={weights}
 					setWeights={setWeights}
 					maxSchedules={maxSchedules}
+					courses={courses}
+					includedCourseIds={includedCourseIds}
+					onToggleCourseInclusion={onToggleCourseInclusion}
 				/>
 			);
 		}

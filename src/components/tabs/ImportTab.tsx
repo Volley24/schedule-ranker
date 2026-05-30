@@ -1,6 +1,6 @@
 import React from "react";
 import styled from "styled-components";
-import { parseSchedules, generateSchedules, filterInvalidSchedules, mapDayWeekToDay } from "../../logic/ranker";
+import { parseSchedules, computeValidSchedules, mapDayWeekToDay } from "../../logic/ranker";
 import { Course, ScheduledClass } from "../../logic/definitions";
 import {
 	FormControl,
@@ -10,10 +10,14 @@ import {
 	Button,
 	Divider,
 	Typography,
+	Dialog,
+	DialogTitle,
+	DialogContent,
+	DialogActions,
 } from "@mui/material";
 import { scheduleStorage } from "./logic/scheduleLocalStorage";
 import { CreateScheduleDialog } from "./schedule_create/CreateScheduleDialog";
-import { UICourse } from "./logic/courses";
+import { scheduleManager } from "./logic/schedules";
 import { TimeRange } from "../../logic/time";
 
 const CenteredDiv = styled.div`
@@ -45,97 +49,88 @@ const ImportButtonContainer = styled.div`
 	box-sizing: border-box;
 `;
 
-export const ImportTab = (props: { setSchedule: (schedule: ScheduledClass[][]) => void }) => {
-	const { setSchedule } = props;
+const MessageArea = styled.div`
+	width: 100%;
+	padding: 10px;
+	box-sizing: border-box;
+	white-space: pre-wrap;
+	word-break: break-word;
+	overflow-wrap: anywhere;
+	text-align: left;
+`;
+
+function serializeCoursesToJSON(scheduleName: string, courses: Course[]): string {
+	return JSON.stringify({
+		tag: scheduleName,
+		classes: courses.map((course) => ({
+			id: course.id,
+			name: course.name,
+			sections: course.sections
+				.filter((section) => !section.isLab)
+				.map((section) => {
+					return `${section.sectionId},${section.prof},${section.days.map((d) => mapDayWeekToDay(d)).join("/")},${section.time.format24h()}${section.isOnline ? ",ONLINE" : ""}`;
+				}),
+			labSections: course.sections
+				.filter((section) => section.isLab)
+				.map((section) => {
+					return `${section.classSectionIds?.join("/")},${section.sectionId},${section.prof},${section.days.map((d) => mapDayWeekToDay(d)).join("/")},${section.time.format24h()}${section.isOnline ? ",ONLINE" : ""}`;
+				}),
+		})),
+	});
+}
+
+function persistSchedule(scheduleName: string, courses: Course[]): void {
+	const json = serializeCoursesToJSON(scheduleName, courses);
+	scheduleManager.saveSchedule(scheduleName, json);
+}
+
+export const ImportTab = (props: { activateSchedule: (courses: Course[], validSchedules: ScheduledClass[][]) => void }) => {
+	const { activateSchedule } = props;
 	const [messageState, setMessageState] = React.useState("");
 	const [selectedSchedule, setSelectedSchedule] = React.useState("None");
-	const [isOverridePopupOpen, setOverridePopupOpen] = React.useState(false);
 
 	const [isCreatingClasses, setCreatingClasses] = React.useState(false);
+	const [noValidCombinationsError, setNoValidCombinationsError] = React.useState<{
+		scheduleName: string;
+		totalCombinations: number;
+	} | null>(null);
 
-	const onCloseAndSave = (scheduleName: string, courses: Course[]) => {
-		const schedules = generateSchedules(courses);
-		const validSchedules = filterInvalidSchedules(schedules);
+	const tryActivateSchedule = (scheduleName: string, courses: Course[]): boolean => {
+		const { validSchedules, totalCombinations } = computeValidSchedules(courses);
 
-		setSchedule(validSchedules);
-
-		// Ok this is kinda like the most important part.
-		/*
-		{
-			"id": "MATH 1005",
-			"name": "Diff. Eqs. & Series Eng. & Phy",
-			"sections": [
-				"A,Ayse Alaca,Wed/Fri,10:05 - 11:25",
-				"B,Ayse Alaca,Mon/Wed,11:35 - 12:55",
-				"C,Unknown,Tue/Thu,08:35 - 09:55",
-				"D,Unknown,Tue/Thu,14:35 - 15:55",
-				"E,Unknown,Mon/Wed,18:05 - 19:25",
-				"F,Unknown,Tue/Thu,19:35 - 20:55"
-			],
-			"labSections": [
-				"A,AT,a,Wed,17:35 - 18:25",
-				"B,BT,a,Mon,14:35 - 15:25",
-				"C,CT,a,Thu,13:35 - 14:25",
-				"D,DT,a,Thu,17:35 - 18:25",
-				"E,ET,a,Wed,19:35 - 20:25",
-				"F,FT,a,Thu,21:05 - 21:55"
-			]
+		if (validSchedules.length === 0) {
+			setMessageState("");
+			setNoValidCombinationsError({ scheduleName, totalCombinations });
+			return false;
 		}
-		*/
-		// Convert convertedCourses -> "JSON string notation". Here is an example:
 
-		// "A,Shaghayegh Gomar,Mon/Wed,08:35 - 09:55"
-		const scheduleJSON = JSON.stringify(
-			{
-				tag: scheduleName,
-				classes: courses.map((course) => ({
-					id: course.id,
-					name: course.name,
-					sections: course.sections.filter(section => !section.isLab).map((section) => {
-						console.log("Section days:", section.days);
-						console.log("Section days mapped:", section.days.map((dayOfWeek) => mapDayWeekToDay(dayOfWeek)));
-						return `${section.sectionId},${section.prof},${section.days.map((dayOfWeek) => mapDayWeekToDay(dayOfWeek)).join("/")},${section.time.format24h()}${section.isOnline ? ",ONLINE" : ""}`;
-					}),
-					labSections: course.sections.filter(section => section.isLab).map((section) => {
-						return `${section.classSectionIds?.join("/")},${section.sectionId},${section.prof},${section.days.map((dayOfWeek) => mapDayWeekToDay(dayOfWeek)).join("/")},${section.time.format24h()}${section.isOnline ? ",ONLINE" : ""}`;
-					}),
-				})),
-			}
-		);
+		activateSchedule(courses, validSchedules);
+		setSelectedSchedule(scheduleName);
+		return true;
+	};
 
-		console.log("Converted Courses JSON:", scheduleJSON);
-		// save to local storage.
-		if (scheduleName) {
-			scheduleStorage.putSchedule(scheduleName, scheduleJSON);
-		}
+	const handleSave = (scheduleName: string, courses: Course[]) => {
+		persistSchedule(scheduleName, courses);
+	};
+
+	const handleCreateAndActivate = (scheduleName: string, courses: Course[]) => {
+		persistSchedule(scheduleName, courses);
+		tryActivateSchedule(scheduleName, courses);
 	};
 
 	const handleScheduleImport = async (files: React.ChangeEvent<HTMLInputElement>) => {
-		console.log("on change");
 		setMessageState("Importing...");
 		const file = files.target.files?.[0];
 		if (file) {
 			const contents = await file.text();
-
 			importSchedule(file.name, contents, true);
-			// update json! (if valid).
 		}
-	}
-
+	};
 
 	const importSchedule = (key: string, contents: string, save: boolean) => {
-		// TODO: for later.
-		// if (save && scheduleStorage.scheduleExists(key)) {
-		// 	// Show popup.
-		// 	setOverridePopupOpen(true);
-		// 	return;
-		// }
-
 		try {
 			const parsedJSON = JSON.parse(contents);
 			const schedule = parseSchedules(parsedJSON);
-
-			console.log(`Parse schedules:`, schedule);
 
 			const transformedCourses: Course[] = schedule.courses.map((course) => ({
 				...course,
@@ -145,30 +140,32 @@ export const ImportTab = (props: { setSchedule: (schedule: ScheduledClass[][]) =
 				})),
 			}));
 
-					
-			const schedules = generateSchedules(transformedCourses);
-			const validSchedules = filterInvalidSchedules(schedules);
+			const { validSchedules, totalCombinations } = computeValidSchedules(transformedCourses);
 
-			setSchedule(validSchedules);
+			if (validSchedules.length === 0) {
+				setMessageState("");
+				setNoValidCombinationsError({
+					scheduleName: key,
+					totalCombinations,
+				});
+				return;
+			}
 
-			// TODO: Show popup if already exists?
-			// a) Override b) Store seperatally
+			activateSchedule(transformedCourses, validSchedules);
+
 			if (save) scheduleStorage.putSchedule(schedule.name, contents);
 
 			setMessageState(
 				[
-					`Succesfully imported ${schedule.name}!`,
+					`Successfully imported ${schedule.name}!`,
 					`File Length: ${contents.length} chars`,
 					"",
-					`Total combinations: ${schedules.length}`,
+					`Total combinations: ${totalCombinations}`,
 					`Valid combinations: ${validSchedules.length}`,
 					"",
 					"Classes imported:",
 					schedule.courses
-						.map(
-							(course) =>
-								`${course.id} - Sections: ${course.sections.length}`
-						)
+						.map((course) => `${course.id} - Sections: ${course.sections.length}`)
 						.join("\n"),
 				].join("\n")
 			);
@@ -180,21 +177,49 @@ export const ImportTab = (props: { setSchedule: (schedule: ScheduledClass[][]) =
 
 	return (
 		<CenteredDiv>
-			<CreateScheduleDialog open={isCreatingClasses} close={() => setCreatingClasses(false)} onCreateAndSave={onCloseAndSave}/>
+			<Dialog
+				open={noValidCombinationsError !== null}
+				onClose={() => setNoValidCombinationsError(null)}
+			>
+				<DialogTitle>No Valid Schedules</DialogTitle>
+				<DialogContent>
+					{noValidCombinationsError && (
+						<>
+							<strong>{noValidCombinationsError.scheduleName}</strong> has no valid schedule
+							combinations.
+							<br />
+							<br />
+							{noValidCombinationsError.totalCombinations === 0
+								? "No combinations could be generated. Make sure each course has at least one section."
+								: `${noValidCombinationsError.totalCombinations} combination(s) were generated, but all had overlapping classes on the same day.`}
+						</>
+					)}
+				</DialogContent>
+				<DialogActions>
+					<Button onClick={() => setNoValidCombinationsError(null)}>OK</Button>
+				</DialogActions>
+			</Dialog>
+
+			<CreateScheduleDialog
+				open={isCreatingClasses}
+				close={() => setCreatingClasses(false)}
+				onSave={handleSave}
+				onCreateAndActivate={handleCreateAndActivate}
+			/>
 			<ImportButtonContainer>
 				<Typography align="left" sx={{ marginBottom: "10px" }}>
 					1. Add / Edit a Schedule
 				</Typography>
-				<Button variant="contained" component="label"  onClick={() => setCreatingClasses(true)}>
+				<Button variant="contained" component="label" onClick={() => setCreatingClasses(true)}>
 					Schedule Editor
 				</Button>
 			</ImportButtonContainer>
-		
+
 			<Divider color="#000000" sx={{ width: "100%" }} />
 
 			<StyledSavedSchedulesContainer>
 				<Typography align="left" sx={{ marginBottom: "10px" }}>
-					2. Select Saved Schedule
+					2. Select/Load Saved Schedule
 				</Typography>
 
 				<FormControl sx={{ width: 300, textAlign: "left" }}>
@@ -204,12 +229,6 @@ export const ImportTab = (props: { setSchedule: (schedule: ScheduledClass[][]) =
 						label="Saved Schedules"
 						onChange={(event) => {
 							setSelectedSchedule(event.target.value);
-							//const key = event.target.value;
-							//const item = localStorage.getItem(key);
-
-							// if (item) {
-							// 	handleSelect(key, item);
-							// }
 						}}
 					>
 						<MenuItem value={"None"}>None</MenuItem>
@@ -221,19 +240,20 @@ export const ImportTab = (props: { setSchedule: (schedule: ScheduledClass[][]) =
 					</Select>
 				</FormControl>
 				<SavedScheduleButtonContainer>
-					<Button
-						variant="contained"
-						component="label"
-						onClick={() => {
-							const fileContents = scheduleStorage.getScheduleByKey(selectedSchedule);
+				<Button
+					variant="contained"
+					component="label"
+					disabled={selectedSchedule === "None"}
+					onClick={() => {
+						const fileContents = scheduleStorage.getScheduleByKey(selectedSchedule);
 
-							if (fileContents) {
-								importSchedule(selectedSchedule, fileContents, false);
-							}
-						}}
-					>
-						Import
-					</Button>
+						if (fileContents) {
+							importSchedule(selectedSchedule, fileContents, false);
+						}
+					}}
+				>
+					Load
+				</Button>
 					<Button variant="contained" component="label" color="error" disabled>
 						Remove
 					</Button>
@@ -259,7 +279,7 @@ export const ImportTab = (props: { setSchedule: (schedule: ScheduledClass[][]) =
 
 			<Divider color="#000000" sx={{ width: "100%", marginBottom: "10px" }} />
 
-			{messageState}
+			{messageState && <MessageArea>{messageState}</MessageArea>}
 		</CenteredDiv>
 	);
 };

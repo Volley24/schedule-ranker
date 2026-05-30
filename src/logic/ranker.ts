@@ -346,7 +346,6 @@ export const mapDayToWeekDay = (day: string): WeekDay | undefined => {
 }
 
 export const mapDayWeekToDay = (weekDay: WeekDay, cap = false): string => {
-	console.log("WeekDay:", weekDay);
 	const mapDay: Record<WeekDay, string> = {
 		[WeekDay.MONDAY]: "mon",
 		[WeekDay.TUESDAY]: "tue",
@@ -396,8 +395,7 @@ export const parseSchedules = (schedule: RawSchedule): UISchedule => {
 				}
 			)],
 		})),
-		newSchedule: true,
-		undoStack: []
+		newSchedule: true
 	};
 };
 
@@ -430,8 +428,7 @@ export const parseUISchedules = (schedule: RawSchedule): UISchedule => {
 				}
 			)],
 		})),
-		newSchedule: false,
-		undoStack: [],
+		newSchedule: false
 	};
 };
 
@@ -473,6 +470,12 @@ export const getNumOfCombinations = (courses: Course[]) => {
 	return combinations;
 };
 
+export function computeValidSchedules(courses: Course[]) {
+	const schedules = generateSchedules(courses);
+	const validSchedules = filterInvalidSchedules(schedules);
+	return { validSchedules, totalCombinations: schedules.length };
+}
+
 export const filterInvalidSchedules = (schedules: ScheduledClass[][]) => {
 	const filtered = schedules
 		.map((schedule) =>
@@ -503,7 +506,6 @@ export const filterInvalidSchedules = (schedules: ScheduledClass[][]) => {
 
 
 export const generateSchedules = (courses: Course[]): ScheduledClass[][] => {
-	console.log("Generating schedules...");
 	const schedules: ScheduledClass[][] = [];
 
 	const transformedCourses: TransformedCourse[] = courses.map((course) => ({

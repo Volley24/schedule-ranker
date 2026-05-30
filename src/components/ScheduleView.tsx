@@ -157,6 +157,8 @@ const PaperView = styled(Paper)<{$color: string}>`
 		background: ${props => props.$color};
 	}
 	height: 100%;
+	padding: 5px;
+	box-sizing: border-box;
 `;
 
 export const ClassView = (props: { aClass: ScheduledClass; numTicks: number; index: number }) => {

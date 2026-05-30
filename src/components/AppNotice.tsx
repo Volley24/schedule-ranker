@@ -17,7 +17,7 @@ export const AppNotice = () => {
             Carleton Schedule Ranker - v.0.3.0-alpha-1
             <br />
             Made by Maxim Creanga - <a href="https://github.com/Volley24/schedule-ranker">Github Link</a>
-            <CopyrightText>© 2024-2025 Carleton Schedule Ranker. All Rights Reserved.</CopyrightText>
+            <CopyrightText>© 2024-2026 Carleton Schedule Ranker. All Rights Reserved.</CopyrightText>
         </VersionContainer>
     );
 }

@@ -1,10 +1,9 @@
 import React from "react";
 import styled from "styled-components";
 import { TabBar } from "./components/TabBar";
-import { filterInvalidSchedules, generateSchedules, parseSchedules, rankSchedules, RawSchedule } from "./logic/ranker";
+import { computeValidSchedules, rankSchedules } from "./logic/ranker";
 import { ScheduleView } from "./components/ScheduleView";
-import schedule from "./logic/schedule.json";
-import { Schedule, ScheduledClass } from "./logic/definitions";
+import { Course, ScheduledClass } from "./logic/definitions";
 
 const MainContainer = styled.div`
 	display: flex;
@@ -39,14 +38,34 @@ const initializeWeights = () => {
 
 export const App = () => {
 	const [classes, setClasses] = React.useState<ScheduledClass[][]>([]);
+	const [courses, setCourses] = React.useState<Course[]>([]);
+	const [includedCourseIds, setIncludedCourseIds] = React.useState<Set<string>>(new Set());
 	const [weights, setWeights] = React.useState<Weights>(initializeWeights);
-
-	// React.useEffect(() => {
-	// 	setClasses(filterInvalidSchedules(generateSchedules(parseSchedules(schedule).courses)));
-	// }, []);
 	const [scheduleIndex, setScheduleIndex] = React.useState<number>(1);
 
 	const rankedSchedules = React.useMemo(() => rankSchedules(classes, weights), [classes, weights]);
+
+	const activateSchedule = (newCourses: Course[], validSchedules: ScheduledClass[][]) => {
+		setCourses(newCourses);
+		setIncludedCourseIds(new Set(newCourses.map((c) => c.id)));
+		setClasses(validSchedules);
+		setScheduleIndex(1);
+	};
+
+	const toggleCourseInclusion = (courseId: string, included: boolean) => {
+		const newIds = new Set(includedCourseIds);
+		if (included) {
+			newIds.add(courseId);
+		} else {
+			newIds.delete(courseId);
+		}
+		setIncludedCourseIds(newIds);
+
+		const filteredCourses = courses.filter((c) => newIds.has(c.id));
+		const { validSchedules } = computeValidSchedules(filteredCourses);
+		setClasses(validSchedules);
+		setScheduleIndex(1);
+	};
 
 	return (
 		<MainContainer>
@@ -56,11 +75,14 @@ export const App = () => {
 			<TabBar
 				value={scheduleIndex}
 				setValue={setScheduleIndex}
-				setSchedule={setClasses}
+				activateSchedule={activateSchedule}
 				selectedSchedule={rankedSchedules[scheduleIndex - 1]}
 				weights={weights}
 				setWeights={setWeights}
 				maxSchedules={rankedSchedules.length}
+				courses={courses}
+				includedCourseIds={includedCourseIds}
+				onToggleCourseInclusion={toggleCourseInclusion}
 			/>
 		</MainContainer>
 	);
