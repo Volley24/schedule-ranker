@@ -92,6 +92,7 @@ export const ConfigTab = (props: ConfigTabProps) => {
 				</CourseListContainer>
 			)}
 
+
 			<PaddedContainer>
 				<span>Schedule Rank:</span>
 				<StyledInput
