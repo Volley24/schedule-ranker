@@ -1,6 +1,5 @@
-import { createSlice, configureStore, PayloadAction } from "@reduxjs/toolkit";
-import { ClassSection, Course, CourseMetaData, Schedule } from "../../../logic/definitions";
-import { Time, TimeRange } from "../../../logic/time";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { ClassSection, Course, CourseMetaData } from "../logic/definitions";
 
 export type UISchedule = {
 	name: string;
@@ -18,12 +17,12 @@ export type UISection = Omit<ClassSection, "time"> & {
 
 export const EMPTY_SCHEDULE = "New Schedule";
 
-type EditorState = {
+export type EditorSliceState = {
 	value: UISchedule;
 	savedSnapshot: UICourse[] | null;
 };
 
-const initialState: EditorState = {
+const initialState: EditorSliceState = {
 	value: {
 		name: EMPTY_SCHEDULE,
 		courses: [],
@@ -32,8 +31,8 @@ const initialState: EditorState = {
 	savedSnapshot: null,
 };
 
-const coursesSlice = createSlice({
-	name: "courses",
+const scheduleEditorSlice = createSlice({
+	name: "scheduleEditor",
 	initialState,
 	reducers: {
 		setSchedule: (state, action: PayloadAction<UISchedule | undefined>) => {
@@ -81,10 +80,7 @@ const coursesSlice = createSlice({
 			state.value.courses.splice(action.payload.courseIndex, 1);
 		},
 
-		addCourseSection: (
-			state,
-			action: PayloadAction<{ courseIndex: number }>
-		) => {
+		addCourseSection: (state, action: PayloadAction<{ courseIndex: number }>) => {
 			const course = state.value.courses[action.payload.courseIndex];
 			course?.sections.push({
 				sectionId: "",
@@ -145,27 +141,28 @@ export const {
 	removeSectionByIndex,
 	editCourseId,
 	editSectionByIndex,
-} = coursesSlice.actions;
+} = scheduleEditorSlice.actions;
 
-export const coursesStore = configureStore({
-	reducer: coursesSlice.reducer,
-});
+export const scheduleEditorReducer = scheduleEditorSlice.reducer;
 
-// Selectors
-export const selectScheduleName = (state: EditorState) => state.value.name;
-export const selectIsNewSchedule = (state: EditorState) => state.value.newSchedule;
-export const selectCourses = (state: EditorState) => state.value.courses;
-export const selectHasPendingChanges = (state: EditorState) => {
+// Selectors — take the local slice state for use as:
+//   useAppSelector(state => selectScheduleName(state.scheduleEditor))
+export const selectScheduleName = (state: EditorSliceState) => state.value.name;
+export const selectIsNewSchedule = (state: EditorSliceState) => state.value.newSchedule;
+export const selectCourses = (state: EditorSliceState) => state.value.courses;
+export const selectHasPendingChanges = (state: EditorSliceState) => {
 	if (state.savedSnapshot === null) {
-		return state.value.courses.length > 0 &&
+		return (
+			state.value.courses.length > 0 &&
 			!state.value.courses.every(
 				(c) => c.id === "" && (!c.name || c.name === "") && c.sections.length === 0
-			);
+			)
+		);
 	}
 	return JSON.stringify(state.value.courses) !== JSON.stringify(state.savedSnapshot);
 };
-
-export const selectHasSavedBaseline = (state: EditorState) => state.savedSnapshot !== null;
+export const selectHasSavedBaseline = (state: EditorSliceState) =>
+	state.savedSnapshot !== null;
 
 function arraysEqual<T>(a: T[], b: T[]): boolean {
 	if (a.length !== b.length) return false;
@@ -175,12 +172,16 @@ function arraysEqual<T>(a: T[], b: T[]): boolean {
 	return true;
 }
 
-export function noUnsavedChanges(currentCourses: Course[], compareCourses?: Course[]): boolean {
+export function noUnsavedChanges(
+	currentCourses: Course[],
+	compareCourses?: Course[]
+): boolean {
 	if (!compareCourses) {
-		return currentCourses.every(course =>
-			(!course.id || course.id === "") &&
-			(!course.name || course.name === "") &&
-			(!course.sections || course.sections.length === 0)
+		return currentCourses.every(
+			(course) =>
+				(!course.id || course.id === "") &&
+				(!course.name || course.name === "") &&
+				(!course.sections || course.sections.length === 0)
 		);
 	}
 	if (currentCourses.length !== compareCourses.length) return false;
@@ -197,7 +198,10 @@ export function noUnsavedChanges(currentCourses: Course[], compareCourses?: Cour
 				sa.prof !== sb.prof ||
 				sa.time !== sb.time ||
 				sa.isOnline !== sb.isOnline ||
-				!arraysEqual(Array.isArray(sa.days) ? sa.days : [], Array.isArray(sb.days) ? sb.days : [])
+				!arraysEqual(
+					Array.isArray(sa.days) ? sa.days : [],
+					Array.isArray(sb.days) ? sb.days : []
+				)
 			) {
 				return false;
 			}

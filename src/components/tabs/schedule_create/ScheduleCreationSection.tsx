@@ -12,8 +12,8 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ScienceIcon from "@mui/icons-material/Science";
 import LibraryBooksIcon from "@mui/icons-material/LibraryBooks";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
-import { useDispatch } from "react-redux";
-import { editSectionByIndex, removeSectionByIndex, UISection } from "../logic/courses";
+import { useAppDispatch } from "../../../ui/hooks";
+import { editSectionByIndex, removeSectionByIndex, UISection } from "../../../ui/scheduleEditorUI";
 import { CourseCardAccordionHeader, Group, MyInput } from "./common";
 import { ClassSection, WeekDay } from "../../../logic/definitions";
 import React from "react";
@@ -31,7 +31,7 @@ export type ScheduleCreationSectionProps = {
 export const ScheduleCreationSection = (props: ScheduleCreationSectionProps) => {
     const { courseIndex, sectionIndex, courseSection, totalSections, showErrors = false } = props;
 
-    const dispatch = useDispatch();
+    const dispatch = useAppDispatch();
 
     const [startTime, setStartTime] = React.useState("");
     const [endTime, setEndTime] = React.useState("");

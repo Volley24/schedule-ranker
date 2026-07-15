@@ -1,9 +1,9 @@
 import { ExpandMore as ExpandMoreIcon, School as SchoolIcon, DeleteOutline as DeleteIcon } from "@mui/icons-material";
 import { Accordion, AccordionSummary, AccordionDetails, Button, Alert, IconButton } from "@mui/material";
-import { addCourseSection, editCourseId, removeCourseByIndex, UICourse } from "../logic/courses";
+import { addCourseSection, editCourseId, removeCourseByIndex, UICourse } from "../../../ui/scheduleEditorUI";
 import { CourseCardAccordionHeader, Group, MyInput } from "./common";
 import { ScheduleCreationSection } from "./ScheduleCreationSection";
-import { useDispatch } from "react-redux";
+import { useAppDispatch } from "../../../ui/hooks";
 
 export type ScheduleCreationCourseProps = {
     course: UICourse;
@@ -13,7 +13,7 @@ export type ScheduleCreationCourseProps = {
 
 export const ScheduleCreationCourse = (props: ScheduleCreationCourseProps) => {
     const { course, courseIndex, totalCourses } = props;
-    const dispatch = useDispatch();
+    const dispatch = useAppDispatch();
 
     const doEditCourseId = (value: string) => {
         dispatch(editCourseId({ courseIndex, newCourseId: value }));

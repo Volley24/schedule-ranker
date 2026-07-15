@@ -1,6 +1,6 @@
 import { RawCourse, Schedule } from "../../../logic/definitions";
 import { parseUISchedules } from "../../../logic/ranker";
-import { UISchedule } from "./courses";
+import { UISchedule } from "../../../ui/scheduleEditorUI";
 import { ScheduleStorage } from "./scheduleLocalStorage";
 
 class ScheduleManager {

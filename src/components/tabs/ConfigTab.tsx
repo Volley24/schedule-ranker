@@ -1,21 +1,15 @@
-import { Checkbox, FormControlLabel, TextField, Typography, Divider } from "@mui/material";
-import { Course, RankedSchedule } from "../../logic/definitions";
-import { WeightCategory, Weights } from "../../App";
+import { TextField, Typography } from "@mui/material";
+import { WeightCategory } from "../../logic/definitions";
 import styled from "styled-components";
-
-export type ConfigTabProps = {
-	scheduleIndex: number;
-	setScheduleIndex: (newIndex: number) => void;
-
-	selectedSchedule: RankedSchedule | undefined;
-	maxSchedules: number;
-	weights: Weights;
-	setWeights: (val: Weights) => void;
-
-	courses: Course[];
-	includedCourseIds: Set<string>;
-	onToggleCourseInclusion: (courseId: string, included: boolean) => void;
-};
+import { useAppDispatch, useAppSelector } from "../../ui/hooks";
+import {
+	selectMaxSchedules,
+	selectScheduleIndex,
+	selectSelectedSchedule,
+	selectWeights,
+	setScheduleIndex,
+	setWeight,
+} from "../../ui/scheduleViewUI";
 
 const StyledTable = styled.table`
 	width: 100%;
@@ -41,14 +35,13 @@ const StyledInput = styled(TextField)`
 	}
 `;
 
-const CourseListContainer = styled.div`
-	padding: 10px;
-	display: flex;
-	flex-direction: column;
-`;
+export const ConfigTab = () => {
+	const dispatch = useAppDispatch();
 
-export const ConfigTab = (props: ConfigTabProps) => {
-	const { scheduleIndex, setScheduleIndex, selectedSchedule, weights, setWeights, maxSchedules, courses, includedCourseIds, onToggleCourseInclusion } = props;
+	const scheduleIndex = useAppSelector(selectScheduleIndex);
+	const selectedSchedule = useAppSelector(selectSelectedSchedule);
+	const weights = useAppSelector(selectWeights);
+	const maxSchedules = useAppSelector(selectMaxSchedules);
 
 	const getWeightInput = (key: WeightCategory) => {
 		return (
@@ -59,12 +52,9 @@ export const ConfigTab = (props: ConfigTabProps) => {
 					type: "number",
 					"aria-labelledby": "input-slider",
 				}}
-				value={weights.get(key)}
+				value={weights[key]}
 				onChange={(e) => {
-					// This SUPER UGLY. Def need to change this later.
-					const newMap = new Map<WeightCategory, number>(weights);
-					newMap.set(key, Number(e.target.value));
-					setWeights(newMap);
+					dispatch(setWeight({ category: key, value: Number(e.target.value) }));
 				}}
 			/>
 		);
@@ -72,51 +62,36 @@ export const ConfigTab = (props: ConfigTabProps) => {
 
 	return (
 		<div>
-			{courses.length > 0 && (
-				<CourseListContainer>
-					<Typography variant="subtitle2">Included Classes</Typography>
-					{courses.map((course) => (
-						<FormControlLabel
-							key={course.id}
-							control={
-								<Checkbox
-									size="small"
-									checked={includedCourseIds.has(course.id)}
-									onChange={(_, checked) => onToggleCourseInclusion(course.id, checked)}
-								/>
-							}
-							label={course.name ? `${course.id} - ${course.name}` : course.id}
-						/>
-					))}
-					<Divider sx={{ marginTop: "5px" }} />
-				</CourseListContainer>
-			)}
-
-
 			<PaddedContainer>
-				<span>Schedule Rank:</span>
-				<StyledInput
-					sx={{ width: "100px" }}
-					variant="outlined"
-					size="small"
-					inputProps={{
-						type: "number",
-						"aria-labelledby": "input-slider",
-					}}
-					value={scheduleIndex}
-					onChange={(e) => {
-						const value = e.target.value;
-
-						const isValidIndex = [...value].every((char) =>
-							[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].includes(Number(char))
-						);
-
-						if (isValidIndex) {
-							setScheduleIndex(Number(e.target.value));
-						}
-					}}
-				/>
-				/ {maxSchedules}
+				{maxSchedules > 0 ? (
+					<>
+						<span>Schedule Rank:</span>
+						<StyledInput
+							sx={{ width: "100px" }}
+							variant="outlined"
+							size="small"
+							inputProps={{
+								type: "number",
+								"aria-labelledby": "input-slider",
+							}}
+							value={scheduleIndex}
+							onChange={(e) => {
+								const value = e.target.value;
+								const isValidIndex = [...value].every((char) =>
+									[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].includes(Number(char))
+								);
+								if (isValidIndex) {
+									dispatch(setScheduleIndex(Number(e.target.value)));
+								}
+							}}
+						/>
+						/ {maxSchedules}
+					</>
+				) : (
+					<Typography variant="body2" color="text.secondary">
+						{selectedSchedule ? "No possible schedules under this configuration!" : "No schedule loaded yet. Import one from the Import tab."}
+					</Typography>
+				)}
 			</PaddedContainer>
 
 			{selectedSchedule && (
@@ -129,20 +104,24 @@ export const ConfigTab = (props: ConfigTabProps) => {
 							<th>Weight Score</th>
 						</tr>
 
-						{Array.from(selectedSchedule.scores.entries()).map(([key, score]) => {
-							const weight = weights.get(key) ?? 0;
-							return (
-								<tr>
-									<td>{key}</td>
-									<td width={60}>{getWeightInput(key)}</td>
-									<td>{score.toFixed(2)}</td>
-									<td>{(score * weight).toFixed(2)}</td>
-								</tr>
-							);
-						})}
+						{(Object.entries(selectedSchedule.scores) as [WeightCategory, number][]).map(
+							([key, score]) => {
+								const weight = weights[key] ?? 0;
+								return (
+									<tr key={key}>
+										<td>{key}</td>
+										<td width={60}>{getWeightInput(key)}</td>
+										<td>{score.toFixed(2)}</td>
+										<td>{(score * weight).toFixed(2)}</td>
+									</tr>
+								);
+							}
+						)}
 					</StyledTable>
 					<PaddedContainer>
-						<strong>Total Score:</strong> {selectedSchedule.totalScore.toFixed(2)} / 10
+						<Typography>
+							<strong>Total Score:</strong> {selectedSchedule.totalScore.toFixed(2)} / 10
+						</Typography>
 					</PaddedContainer>
 				</>
 			)}

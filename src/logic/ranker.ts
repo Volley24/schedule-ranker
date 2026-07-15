@@ -1,15 +1,13 @@
-import { WeightCategory } from "../App";
-import { UISchedule, UISection } from "../components/tabs/logic/courses";
-import { ClassSection, Course, CourseMetaData, RankedSchedule, RawCourse, Schedule, ScheduledClass, WeekDay } from "./definitions";
-import { TimeRange } from "./time";
+import type { UISchedule, UISection } from "../ui/scheduleEditorUI";
+import { ClassSection, computeFrequency, Course, CourseMetaData, Frequency, RankedSchedule, RawCourse, ScheduledClass, WeekDay, WeightCategory, Weights } from "./definitions";
 
 /**
  * Sort the schedule by number of free days. Modifies the original list.
  * @param schedule A list of classes which is sorted by start time and days, and which does not have any overlapping classes.
  * @returns A sorted schedule with the "best" schedules at the start, and the "worst" ones at the bottom.
  */
-export const rankSchedules = (schedule: ScheduledClass[][], weights: Map<WeightCategory, number>): RankedSchedule[] => {
-	let dayRecord: Record<string, boolean> = {};
+export const rankSchedules = (schedule: ScheduledClass[][], weights: Weights): RankedSchedule[] => {
+	let dayRecord: Record<string, number> = {};
 
 	// Sliders to control the weights
 	// It doesn't matter what they add up to.
@@ -40,12 +38,66 @@ export const rankSchedules = (schedule: ScheduledClass[][], weights: Map<WeightC
 			// Online classes don't really count
 			// As you are still home.
 			if (!classA.isOnline) {
-				dayRecord[classA.day] = true;
+				dayRecord[classA.day] = 1;
 			}
 			if (Object.keys(dayRecord).length === 5) break;
 		}
 
 		return 10 - Object.keys(dayRecord).length * 2;
+	};
+
+
+	/**
+	 * Better day off fn.
+	 * 
+	 */
+	const getDayOffScoreNew = (schedule: ScheduledClass[]) => {
+		// +2 pts for each day off
+		// +1.5 pts for each day off w/ offline classes 
+		// +1 pts for each day which has half classes.
+
+		const dayRecord: Record<string, ScheduledClass[]> = {};
+
+		// #1: Get record of <Day, ScheduledClass>
+		for (const classA of schedule) {
+			if (!dayRecord[classA.day]) {
+				dayRecord[classA.day] = [];
+			}
+			dayRecord[classA.day].push(classA);
+		}
+
+		const weekdays = [WeekDay.MONDAY, WeekDay.TUESDAY, WeekDay.WEDNESDAY, WeekDay.THURSDAY, WeekDay.FRIDAY];
+
+		return weekdays.reduce((sum, day) => {
+			const classes = dayRecord[day];
+			if (!classes || classes.length === 0) {
+				return sum + 2; // +2 pts, no classes that day
+			}
+
+		const isEven = (classA: ScheduledClass) => classA.frequency === Frequency.EVEN;
+		const isOdd = (classA: ScheduledClass) => classA.frequency === Frequency.ODD;
+
+			const canStayAtHome = classes.every(classA => classA.isOnline || isEven(classA) || isOdd(classA));
+			const evenClasses = classes.filter(classA => isEven(classA));
+			const oddClasses = classes.filter(classA => isOdd(classA));
+
+			if (!canStayAtHome || (evenClasses.length >= 1 && oddClasses.length >= 1)) {
+				return sum;
+			}
+
+			// Average out between +1pts / +1.5pts
+			const totalPoints = classes.reduce((sum, classA) => {
+				if (classA.isOnline) {
+					sum += 1.5
+				}else {
+					sum += 1;
+				}
+
+				return sum;
+			}, 0);
+
+			return sum + (totalPoints / classes.length);
+		}, 0);
 	};
 
 	// Weights aren't enough...
@@ -301,20 +353,22 @@ export const rankSchedules = (schedule: ScheduledClass[][], weights: Map<WeightC
 	};
 
 	const rankedSchedules: RankedSchedule[] = schedule.map((schedule) => {
-		const scoreMap = new Map<WeightCategory, number>();
-		scoreMap.set(WeightCategory.BREAK_AMOUNT, getBreakScore(schedule));
-		scoreMap.set(WeightCategory.DAY_OFF, getDayOffScore(schedule));
-		scoreMap.set(WeightCategory.NO_EARLY_CLASSES, getEarlyClassTimeScore(schedule));
-		scoreMap.set(WeightCategory.NO_LATE_CLASSES, getLateClassTimeScore(schedule));
+		const scoreMap: Weights = {
+			[WeightCategory.BREAK_AMOUNT]: getBreakScore(schedule),
+			[WeightCategory.DAY_OFF]: getDayOffScoreNew(schedule),
+			[WeightCategory.NO_EARLY_CLASSES]: getEarlyClassTimeScore(schedule),
+			[WeightCategory.NO_LATE_CLASSES]: getLateClassTimeScore(schedule),
+		};
 
-		// weights
-		const totalScore = Array.from(scoreMap.entries()).reduce(
-			(totalScore, [key, score]) => totalScore + (weights.get(key) ?? 0) * score,
+		const scoreEntries = Object.entries(scoreMap) as [WeightCategory, number][];
+
+		const totalScore = scoreEntries.reduce(
+			(totalScore, [key, score]) => totalScore + (weights[key] ?? 0) * score,
 			0
 		);
 
-		const totalPossibleScore = Array.from(scoreMap.entries()).reduce(
-			(totalScore, [key, score]) => totalScore + (weights.get(key) ?? 0) * 10,
+		const totalPossibleScore = scoreEntries.reduce(
+			(totalScore, [key, score]) => totalScore + (weights[key] ?? 0) * 10,
 			0
 		);
 
@@ -366,7 +420,7 @@ export type RawSchedule = {
 }
 
 
-export const parseSchedules = (schedule: RawSchedule): UISchedule => {
+export const parseSchedules = (name: string, schedule: RawSchedule): UISchedule => {
 	const mapClasses = (strSplit: string[], isLab: boolean): UISection => {
 		const offset = isLab ? 1 : 0;
 		return {
@@ -379,22 +433,32 @@ export const parseSchedules = (schedule: RawSchedule): UISchedule => {
 		};
 	};
 
+	
 	return {
-		name: schedule.tag,
-		courses: schedule.classes.map((course) => ({
-			...course,
-			sections: [
-				...course.sections.map((str) => {
-					return mapClasses(str.split(","), false);
-				}), 
-				...course.labSections.map((str) => {
-					const strSplit = str.split(",");
-					const labSection = mapClasses(strSplit, true);
-					labSection.classSectionIds = strSplit[0].split("/");
-					return labSection;
-				}
-			)],
-		})),
+		name: schedule.tag ?? name,
+		courses: schedule.classes.map((course) => {
+			const labs = course.labSections.map((str) => {
+				const strSplit = str.split(",");
+				const labSection = mapClasses(strSplit, true);
+				labSection.classSectionIds = strSplit[0].split("/");
+				return labSection;
+			});
+
+			return {
+				...course,
+				sections: [
+					...course.sections.map((str) => {
+						return mapClasses(str.split(","), false);
+					}), 
+					...course.labSections.map((str) => {
+						const strSplit = str.split(",");
+						const labSection = mapClasses(strSplit, true);
+						labSection.classSectionIds = strSplit[0].split("/");
+						return labSection;
+					}
+				)]
+			}
+		}),
 		newSchedule: true
 	};
 };
@@ -486,12 +550,20 @@ export const filterInvalidSchedules = (schedules: ScheduledClass[][]) => {
 			})
 		)
 		.filter((schedule) => {
-			// return true;
 			for (let i = 1; i < schedule.length; i++) {
 				const currentClass = schedule[i];
 				const lastClass = schedule[i - 1];
 
 				if (currentClass.day !== lastClass.day) {
+					continue;
+				}
+				
+				// Even and odd classes never share the same calendar week, so a time overlap between them is legal.
+				if (
+					currentClass.frequency !== lastClass.frequency &&
+					currentClass.frequency !== undefined &&
+					lastClass.frequency !== undefined
+				) {
 					continue;
 				}
 				if (currentClass.time.startTime.isBefore(lastClass.time.endTime)) {
@@ -525,6 +597,7 @@ export const generateSchedules = (courses: Course[]): ScheduledClass[][] => {
 					...potentialClass,
 					day,
 					isLab: false,
+					frequency: computeFrequency(potentialClass.sectionId),
 				}))
 			);
 
@@ -545,14 +618,15 @@ export const generateSchedules = (courses: Course[]): ScheduledClass[][] => {
 				}
 				const newerSchedule: ScheduledClass[] = [...newSchedule];
 
-				newerSchedule.push(
-					...potentialLab.days.map((day) => ({
-						...myClass,
-						...potentialLab,
-						day,
-						isLab: true,
-					}))
-				);
+			newerSchedule.push(
+				...potentialLab.days.map((day) => ({
+					...myClass,
+					...potentialLab,
+					day,
+					isLab: true,
+					frequency: computeFrequency(potentialLab.sectionId),
+				}))
+			);
 
 				if (index + 1 < courses.length) {
 					recurse(newerSchedule, index + 1);

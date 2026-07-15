@@ -14,7 +14,6 @@ import {
 } from "@mui/material";
 import { useState } from "react";
 import styled from "styled-components";
-import { useDispatch, useSelector } from "react-redux";
 import {
 	addCourse,
 	commitSchedule,
@@ -29,7 +28,8 @@ import {
 	setSchedule,
 	UICourse,
 	UISchedule,
-} from "../logic/courses";
+} from "../../../ui/scheduleEditorUI";
+import { useAppDispatch, useAppSelector } from "../../../ui/hooks";
 import { VerticalGroup } from "./common";
 import { ScheduleCreationMainContent } from "./ScheduleCreationMainContent";
 import { scheduleStorage } from "../logic/scheduleLocalStorage";
@@ -73,18 +73,20 @@ const Group = styled.div`
 	gap: 7px;
 `;
 
-type EditorState = { value: UISchedule; savedSnapshot: UICourse[] | null };
-
 export const CreateScheduleDialog = (props: CreateScheduleDialogProps) => {
 	const { open, close, onSave, onCreateAndActivate } = props;
 
-	const dispatch = useDispatch();
+	const dispatch = useAppDispatch();
 
-	const scheduleName = useSelector((state: EditorState) => selectScheduleName(state));
-	const isNewSchedule = useSelector((state: EditorState) => selectIsNewSchedule(state));
-	const courses = useSelector((state: EditorState) => selectCourses(state));
-	const hasPendingChanges = useSelector((state: EditorState) => selectHasPendingChanges(state));
-	const hasSavedBaseline = useSelector((state: EditorState) => selectHasSavedBaseline(state));
+	const scheduleName = useAppSelector((state) => selectScheduleName(state.scheduleEditor));
+	const isNewSchedule = useAppSelector((state) => selectIsNewSchedule(state.scheduleEditor));
+	const courses = useAppSelector((state) => selectCourses(state.scheduleEditor));
+	const hasPendingChanges = useAppSelector((state) =>
+		selectHasPendingChanges(state.scheduleEditor)
+	);
+	const hasSavedBaseline = useAppSelector((state) =>
+		selectHasSavedBaseline(state.scheduleEditor)
+	);
 
 	const [newScheduleName, setNewScheduleName] = useState<string>("");
 	const [confirmSwitchTarget, setConfirmSwitchTarget] = useState<string | null>(null);

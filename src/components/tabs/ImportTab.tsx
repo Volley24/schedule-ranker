@@ -1,7 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 import { parseSchedules, computeValidSchedules, mapDayWeekToDay } from "../../logic/ranker";
-import { Course, ScheduledClass } from "../../logic/definitions";
+import { Course } from "../../logic/definitions";
 import {
 	FormControl,
 	InputLabel,
@@ -19,6 +19,8 @@ import { scheduleStorage } from "./logic/scheduleLocalStorage";
 import { CreateScheduleDialog } from "./schedule_create/CreateScheduleDialog";
 import { scheduleManager } from "./logic/schedules";
 import { TimeRange } from "../../logic/time";
+import { useAppDispatch } from "../../ui/hooks";
+import { activateSchedule } from "../../ui/scheduleViewUI";
 
 const CenteredDiv = styled.div`
 	display: flex;
@@ -68,12 +70,12 @@ function serializeCoursesToJSON(scheduleName: string, courses: Course[]): string
 			sections: course.sections
 				.filter((section) => !section.isLab)
 				.map((section) => {
-					return `${section.sectionId},${section.prof},${section.days.map((d) => mapDayWeekToDay(d)).join("/")},${section.time.format24h()}${section.isOnline ? ",ONLINE" : ""}`;
+					return `${section.sectionId},${section.prof},${section.days.map((d) => mapDayWeekToDay(d)).join("/")},${ section.time.format24h()}${section.isOnline ? ",ONLINE" : ""}`;
 				}),
 			labSections: course.sections
 				.filter((section) => section.isLab)
 				.map((section) => {
-					return `${section.classSectionIds?.join("/")},${section.sectionId},${section.prof},${section.days.map((d) => mapDayWeekToDay(d)).join("/")},${section.time.format24h()}${section.isOnline ? ",ONLINE" : ""}`;
+					return `${section.classSectionIds?.join("/")},${section.sectionId},${section.prof},${section.days.map((d) => mapDayWeekToDay(d)).join("/")},${ section.time.format24h()}${section.isOnline ? ",ONLINE" : ""}`;
 				}),
 		})),
 	});
@@ -84,8 +86,8 @@ function persistSchedule(scheduleName: string, courses: Course[]): void {
 	scheduleManager.saveSchedule(scheduleName, json);
 }
 
-export const ImportTab = (props: { activateSchedule: (courses: Course[], validSchedules: ScheduledClass[][]) => void }) => {
-	const { activateSchedule } = props;
+export const ImportTab = () => {
+	const dispatch = useAppDispatch();
 	const [messageState, setMessageState] = React.useState("");
 	const [selectedSchedule, setSelectedSchedule] = React.useState("None");
 
@@ -104,7 +106,7 @@ export const ImportTab = (props: { activateSchedule: (courses: Course[], validSc
 			return false;
 		}
 
-		activateSchedule(courses, validSchedules);
+		dispatch(activateSchedule({ courses, validSchedules, scheduleName }));
 		setSelectedSchedule(scheduleName);
 		return true;
 	};
@@ -130,7 +132,9 @@ export const ImportTab = (props: { activateSchedule: (courses: Course[], validSc
 	const importSchedule = (key: string, contents: string, save: boolean) => {
 		try {
 			const parsedJSON = JSON.parse(contents);
-			const schedule = parseSchedules(parsedJSON);
+			const schedule = parseSchedules(key, parsedJSON);
+
+			console.log("schedule:", schedule);
 
 			const transformedCourses: Course[] = schedule.courses.map((course) => ({
 				...course,
@@ -139,6 +143,8 @@ export const ImportTab = (props: { activateSchedule: (courses: Course[], validSc
 					time: TimeRange.create(section.time),
 				})),
 			}));
+
+			console.log("transformedCourses:", transformedCourses);
 
 			const { validSchedules, totalCombinations } = computeValidSchedules(transformedCourses);
 
@@ -151,7 +157,7 @@ export const ImportTab = (props: { activateSchedule: (courses: Course[], validSc
 				return;
 			}
 
-			activateSchedule(transformedCourses, validSchedules);
+			dispatch(activateSchedule({ courses: transformedCourses, validSchedules, scheduleName: schedule.name }));
 
 			if (save) scheduleStorage.putSchedule(schedule.name, contents);
 
@@ -240,20 +246,19 @@ export const ImportTab = (props: { activateSchedule: (courses: Course[], validSc
 					</Select>
 				</FormControl>
 				<SavedScheduleButtonContainer>
-				<Button
-					variant="contained"
-					component="label"
-					disabled={selectedSchedule === "None"}
-					onClick={() => {
-						const fileContents = scheduleStorage.getScheduleByKey(selectedSchedule);
-
-						if (fileContents) {
-							importSchedule(selectedSchedule, fileContents, false);
-						}
-					}}
-				>
-					Load
-				</Button>
+					<Button
+						variant="contained"
+						component="label"
+						disabled={selectedSchedule === "None"}
+						onClick={() => {
+							const fileContents = scheduleStorage.getScheduleByKey(selectedSchedule);
+							if (fileContents) {
+								importSchedule(selectedSchedule, fileContents, false);
+							}
+						}}
+					>
+						Load
+					</Button>
 					<Button variant="contained" component="label" color="error" disabled>
 						Remove
 					</Button>

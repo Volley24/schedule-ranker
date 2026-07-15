@@ -2,9 +2,8 @@ import React from "react";
 import styled from "styled-components";
 import { ImportTab } from "./tabs/ImportTab";
 import { Paper, Tabs, Tab } from "@mui/material";
-import { Course, RankedSchedule, ScheduledClass } from "../logic/definitions";
 import { ConfigTab } from "./tabs/ConfigTab";
-import { Weights } from "../App";
+import { IncludesTab } from "./tabs/IncludesTab";
 import { AppNotice } from "./AppNotice";
 
 const StyledPaper = styled(Paper)`
@@ -20,44 +19,22 @@ const MainContainer = styled.div`
 	position: relative;
 `;
 
-
 enum TabName {
 	IMPORT = "Import",
+	INCLUDES = "Includes",
 	CONFIG = "Config",
 }
 
-export const TabBar = (props: {
-	value: number;
-	setValue: (num: number) => void;
-	selectedSchedule: RankedSchedule;
-	activateSchedule: (courses: Course[], validSchedules: ScheduledClass[][]) => void;
-	weights: Weights;
-	setWeights: (val: Weights) => void;
-	maxSchedules: number;
-	courses: Course[];
-	includedCourseIds: Set<string>;
-	onToggleCourseInclusion: (courseId: string, included: boolean) => void;
-}) => {
-	const { value, setValue, selectedSchedule, activateSchedule, weights, setWeights, maxSchedules, courses, includedCourseIds, onToggleCourseInclusion } = props;
+export const TabBar = () => {
 	const [selectedTab, setSelectedTab] = React.useState<TabName>(TabName.IMPORT);
 
 	const renderSelectedTab = () => {
 		if (selectedTab === TabName.IMPORT) {
-			return <ImportTab activateSchedule={activateSchedule} />;
+			return <ImportTab />;
+		} else if (selectedTab === TabName.INCLUDES) {
+			return <IncludesTab />;
 		} else if (selectedTab === TabName.CONFIG) {
-			return (
-				<ConfigTab
-					scheduleIndex={value}
-					setScheduleIndex={setValue}
-					selectedSchedule={selectedSchedule}
-					weights={weights}
-					setWeights={setWeights}
-					maxSchedules={maxSchedules}
-					courses={courses}
-					includedCourseIds={includedCourseIds}
-					onToggleCourseInclusion={onToggleCourseInclusion}
-				/>
-			);
+			return <ConfigTab />;
 		}
 		return <></>;
 	};
@@ -72,6 +49,7 @@ export const TabBar = (props: {
 					variant="fullWidth"
 				>
 					<Tab label={TabName.IMPORT} value={TabName.IMPORT} />
+					<Tab label={TabName.INCLUDES} value={TabName.INCLUDES} />
 					<Tab label={TabName.CONFIG} value={TabName.CONFIG} />
 				</StyledTabs>
 				{renderSelectedTab()}
